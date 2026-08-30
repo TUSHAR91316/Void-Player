@@ -2,7 +2,13 @@
 
 <div align="center">
 
-[![F-Droid](https://img.shields.io/f-droid/v/com.tushar.voidplayer?style=for-the-badge&logo=fdroid&logoColor=white)](https://f-droid.org/en/packages/com.tushar.voidplayer/)
+<a href="https://f-droid.org/en/packages/com.tushar.voidplayer/">
+  <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">
+</a>
+
+<br/><br/>
+
+[![F-Droid Available](https://img.shields.io/badge/F--Droid-Available-3DDC84?style=for-the-badge&logo=fdroid&logoColor=white)](https://f-droid.org/en/packages/com.tushar.voidplayer/)
 ![Kotlin](https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Compose](https://img.shields.io/badge/Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
@@ -11,7 +17,7 @@
 **A modern, high-fidelity, privacy-first local music player built with Kotlin Multiplatform & Jetpack Compose.**  
 *100% Free & Open Source (FOSS) • Zero Ads • Zero Trackers • Zero Telemetry • 100% Offline*
 
-[**Download on F-Droid**](https://f-droid.org/en/packages/com.tushar.voidplayer/) • [**Download APK (GitHub Releases)**](https://github.com/TUSHAR91316/Void-Player/releases/latest)
+[**📱 Get it on F-Droid**](https://f-droid.org/en/packages/com.tushar.voidplayer/) • [**📦 Download APK (GitHub Releases)**](https://github.com/TUSHAR91316/Void-Player/releases/latest) • [**💻 Windows Setup (.msi)**](https://github.com/TUSHAR91316/Void-Player/releases/latest)
 
 </div>
 
@@ -80,8 +86,13 @@
 ## 📥 Installation
 
 ### 📱 Android
-- **F-Droid**: [com.tushar.voidplayer on F-Droid](https://f-droid.org/en/packages/com.tushar.voidplayer/)
-- **Direct APK**: Download the signed APK from [GitHub Releases](https://github.com/TUSHAR91316/Void-Player/releases/latest).
+
+<a href="https://f-droid.org/en/packages/com.tushar.voidplayer/">
+  <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="60">
+</a>
+
+- **F-Droid**: Available on the official F-Droid repository at [com.tushar.voidplayer](https://f-droid.org/en/packages/com.tushar.voidplayer/).
+- **Direct APK**: Download the pre-built signed release APK from [GitHub Releases](https://github.com/TUSHAR91316/Void-Player/releases/latest).
 
 ### 🖥️ Windows Desktop
 - **MSI Installer**: Download `VoidPlayer-2.2.0.msi` from GitHub Releases for seamless installation with Desktop and Start Menu shortcuts.
