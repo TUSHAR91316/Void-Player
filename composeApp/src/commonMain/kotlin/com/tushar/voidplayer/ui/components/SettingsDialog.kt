@@ -1,11 +1,11 @@
 package com.tushar.voidplayer.ui.components
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import com.tushar.voidplayer.player.AudioPlayer
 import com.tushar.voidplayer.ui.theme.PrimaryText
 import com.tushar.voidplayer.ui.theme.SurfaceElevated
-import com.tushar.voidplayer.ui.theme.SurfaceVariant
 import com.tushar.voidplayer.ui.theme.SurfaceBackground
 
 @Composable
@@ -38,7 +37,7 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
             .background(SurfaceBackground)
             .padding(top = 40.dp) // Status bar padding
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             // Header
             Row(
                 modifier = Modifier
@@ -250,10 +249,9 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp).padding(bottom = 25.dp),
                 color = SurfaceElevated,
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(16.dp)
