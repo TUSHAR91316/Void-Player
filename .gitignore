@@ -34,6 +34,7 @@ status_reset.txt
 # Root images (Temporary assets)
 /*.png
 /*.webp
+imaged/
 
 # Legacy Flutter
 legacy_flutter/build/

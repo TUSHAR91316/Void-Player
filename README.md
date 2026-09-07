@@ -24,6 +24,19 @@
 
 </div>
 
+
+---
+
+## Screenshots
+
+<div align="center">
+
+| Now Playing | AI Music Hub | Audio Settings | Library |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/now_playing.jpg" width="220" alt="Void Player Now Playing Screen" /> | <img src="docs/screenshots/ai_hub.jpg" width="220" alt="Void Player AI Music Hub Screen" /> | <img src="docs/screenshots/settings.jpg" width="220" alt="Void Player Audio Settings and Equalizer Screen" /> | <img src="docs/screenshots/library.jpg" width="220" alt="Void Player Library Screen" /> |
+
+</div>
+
 ---
 
 ## Features
