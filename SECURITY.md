@@ -1,69 +1,75 @@
-# 🔒 Security Policy — Void Player
+# Security Policy
 
 ## Supported Versions
 
-Only the latest stable release receives active security maintenance.
-
-| Version | Supported          |
-|---------|-------------------|
-| 2.2.x   | ✅ Actively maintained |
-| 2.1.x   | ⚠️ Critical fixes only |
-| < 2.0   | ❌ End of life |
+| Version | Status |
+|---|---|
+| 2.2.x | Actively maintained |
+| 2.1.x | Critical security fixes only |
+| 2.0.x and earlier | End of life — no further updates |
 
 ---
 
 ## Privacy Architecture
 
-Void Player is designed from the ground up for privacy:
+Void Player is designed to operate entirely without internet connectivity:
 
-- **100% Offline**: All audio parsing, playback, metadata extraction, and AI categorization runs strictly on-device. No internet connection is required or used.
-- **Zero Telemetry**: No crash reporters, analytics SDKs, or ad networks are included.
-- **No Accounts**: No user registration, sign-in, or cloud sync.
-- **Local Storage Only**: Playlists, favorites, EQ settings, and folder history are stored in local app storage (`SharedPreferences` on Android, `.properties` files on Desktop) — never uploaded anywhere.
+- All audio parsing, playback, metadata extraction, and AI categorization runs on the user's device.
+- No telemetry, crash reporters, analytics SDKs, or advertising networks are included.
+- No user account or authentication is required.
+- User data (playlists, favorites, folder history, EQ settings) is stored in local app-private storage (`SharedPreferences` on Android, property files under `~/.voidplayer/` on Desktop) and is never transmitted.
 
 ---
 
 ## Reporting a Vulnerability
 
-We take security and user privacy seriously. If you discover a vulnerability in Void Player, please report it **responsibly**:
+If you discover a security vulnerability or privacy issue in Void Player, please report it responsibly before any public disclosure.
 
-### 1. Do NOT disclose publicly first
-Do not open a public GitHub issue for sensitive security vulnerabilities. This gives us time to investigate and patch before exposure.
+### Step 1: Do not disclose publicly first
 
-### 2. Submit a Private Security Advisory
-Open a **private** security advisory directly on GitHub:  
-👉 [**New Security Advisory**](https://github.com/TUSHAR91316/Void-Player/security/advisories/new)
+Do not open a public GitHub issue for security vulnerabilities. Public disclosure before a patch is available may expose users to risk.
 
-### 3. Include these details:
-- **Description**: Clear explanation of the vulnerability.
-- **Steps to Reproduce**: Numbered steps or a proof-of-concept.
-- **Affected Platform(s)**: Android / Windows Desktop / Both.
-- **Potential Impact**: What an attacker could do if this were exploited.
-- **Suggested Fix** (optional): If you have ideas on how to fix it.
+### Step 2: Submit a private security advisory
+
+Open a private advisory through GitHub's Security Advisories feature:
+
+[Submit a Security Advisory](https://github.com/TUSHAR91316/Void-Player/security/advisories/new)
+
+### Step 3: Include the following details
+
+- A clear description of the vulnerability.
+- Numbered steps or a proof-of-concept to reproduce the issue.
+- The affected platform or platforms (Android, Windows Desktop, or both).
+- The potential impact if the vulnerability were exploited.
+- A suggested remediation, if one is known.
 
 ---
 
 ## Response Timeline
 
-| Action | Target Time |
+| Action | Target |
 |---|---|
-| Initial acknowledgment | Within 48 hours |
-| Severity assessment | Within 5 business days |
-| Patch release (critical) | Within 14 days |
-| Patch release (moderate) | Within 30 days |
-| Public disclosure | After patch is released |
+| Initial acknowledgment | Within 48 hours of receipt |
+| Severity assessment and triage | Within 5 business days |
+| Patch release for critical severity | Within 14 days |
+| Patch release for moderate severity | Within 30 days |
+| Public disclosure | After the patch is released and distributed |
 
 ---
 
 ## Scope
 
-The following are **in scope** for this security policy:
-- APK / Desktop binary integrity issues.
-- File path traversal or unauthorized filesystem access.
-- Memory safety issues in native audio DSP components.
-- Overlay / window manager security issues (`OverlayService`).
+The following are within scope for this security policy:
 
-The following are **out of scope**:
-- Issues in third-party libraries (report to the respective upstream project).
-- Bugs that require physical device access to exploit.
-- UI/UX issues that are not security-relevant.
+- APK or binary integrity issues.
+- Unauthorized filesystem access or path traversal vulnerabilities.
+- Memory safety issues in native audio components (DSP, effects processing).
+- Window manager or overlay service security issues (`OverlayService`).
+- Issues that allow one app to access another app's private storage.
+
+The following are outside scope:
+
+- Vulnerabilities in upstream third-party libraries. Please report those to the respective project.
+- Issues that require physical access to an unlocked device.
+- UI or usability issues that have no security impact.
+- Denial-of-service issues that affect only the reporting user's own device.

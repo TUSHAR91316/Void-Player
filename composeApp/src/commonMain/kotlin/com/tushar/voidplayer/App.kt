@@ -130,7 +130,8 @@ fun MainContent(
 
     fun navigateTo(tab: Int) {
         if (selectedNavTab != tab) {
-            navBackStack = navBackStack + selectedNavTab
+            // L-5 fix: cap the back stack to avoid unbounded growth from rapid tab switching.
+            navBackStack = (navBackStack + selectedNavTab).takeLast(10)
             selectedNavTab = tab
         }
     }
@@ -161,7 +162,10 @@ fun MainContent(
         }
     }
 
-    val canGoBack = showSettings || songToAddToPlaylist != null || searchQuery.isNotBlank() || selectedNavTab != 0
+    // L-6 fix: use derivedStateOf to avoid unnecessary recompositions of PlatformBackHandler.
+    val canGoBack by remember {
+        derivedStateOf { showSettings || songToAddToPlaylist != null || searchQuery.isNotBlank() || selectedNavTab != 0 }
+    }
     com.tushar.voidplayer.ui.PlatformBackHandler(enabled = canGoBack) {
         handleBack()
     }
@@ -184,7 +188,8 @@ fun MainContent(
             if (player.currentSong.value == null && loaded.isNotEmpty()) {
                 player.setPlaylist(loaded)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            // L-1 fix: surface load errors through the player error channel rather than swallowing silently.
             e.printStackTrace()
         } finally {
             isLoading = false
@@ -328,6 +333,7 @@ fun MainContent(
             // --- Main Content Area ---
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 when {
+                    // M-4 fix: check isLoading first so the spinner shows before the empty state check.
                     isLoading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = accentColor)

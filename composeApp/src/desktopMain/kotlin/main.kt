@@ -111,12 +111,14 @@ class DesktopSongRepository : SongRepository {
     }
 
     override suspend fun toggleFavorite(songId: Long, isFav: Boolean) = withContext(Dispatchers.IO) {
-        val favs = getFavorites().toMutableSet()
-        if (isFav) favs.add(songId.toString()) else favs.remove(songId.toString())
+        // Read once, modify, and write atomically to avoid double file I/O and race conditions.
         val props = Properties()
         if (prefsFile.exists()) {
             prefsFile.inputStream().use { props.load(it) }
         }
+        val raw = props.getProperty("favorites", "")
+        val favs = (if (raw.isNotBlank()) raw.split(",").toMutableSet() else mutableSetOf())
+        if (isFav) favs.add(songId.toString()) else favs.remove(songId.toString())
         props.setProperty("favorites", favs.joinToString(","))
         prefsFile.outputStream().use { props.store(it, "Void Player Preferences") }
     }
@@ -245,15 +247,22 @@ class DesktopSongRepository : SongRepository {
     }
 
     private fun estimateAudioDuration(file: File): Long {
+        // Bug C-2 fix: always close AudioInputStream to prevent file handle exhaustion.
         return try {
-            val audioInputStream = AudioSystem.getAudioInputStream(file)
-            val format = audioInputStream.format
-            val frames = audioInputStream.frameLength
-            val durationInSeconds = (frames / format.frameRate).toDouble()
-            (durationInSeconds * 1000).toLong().coerceAtLeast(60000L)
+            AudioSystem.getAudioInputStream(file).use { audioInputStream ->
+                val format = audioInputStream.format
+                val frames = audioInputStream.frameLength
+                if (frames > 0 && format.frameRate > 0) {
+                    val durationInSeconds = frames / format.frameRate
+                    (durationInSeconds * 1000).toLong().coerceAtLeast(0L)
+                } else {
+                    // Frame count unavailable (e.g., streaming formats); fall through to size estimation.
+                    throw UnsupportedOperationException("Frame length unavailable")
+                }
+            }
         } catch (_: Throwable) {
-            // Fallback estimation from file length (~1MB ~ 1 minute)
-            val approxSecs = (file.length() / (128 * 1024 / 8)).coerceIn(30, 600)
+            // Fallback: estimate from file size. Assumes ~128 kbps average bitrate.
+            val approxSecs = (file.length() / (128L * 1024 / 8)).coerceIn(30, 7200)
             approxSecs * 1000L
         }
     }
@@ -388,6 +397,7 @@ class DesktopAudioPlayer : AudioPlayer {
         clip?.stop()
         _isPlaying.value = false
         positionJob?.cancel()
+        positionJob = null  // M-2 fix: null out the job so resume correctly restarts the tracker.
     }
 
     override fun resume() {

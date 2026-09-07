@@ -1,46 +1,53 @@
-## 📌 Summary
-Provide a clear, concise summary of the changes in this pull request.
+## Summary
 
-**Related Issue**: Fixes #(issue number)
+Provide a concise description of the change and the motivation behind it.
 
----
-
-## 🛠️ Type of Change
-- [ ] 🐛 Bug fix (non-breaking fix)
-- [ ] ✨ New feature (non-breaking addition)
-- [ ] 💥 Breaking change (existing functionality changes)
-- [ ] 🎨 UI / UX redesign or polish
-- [ ] ⚡ Performance optimization
-- [ ] 📝 Documentation update
-- [ ] 🔧 Build / CI / tooling change
-- [ ] ♻️ Refactor (no behavior change)
+Resolves: #(issue number)
 
 ---
 
-## 🧪 Testing Done
-Please describe how you tested your changes:
+## Type of Change
 
-- [ ] Tested on Android (`./gradlew :composeApp:installDebug`)
-- [ ] Tested Android Release build (`./gradlew :composeApp:assembleRelease`)
-- [ ] Tested on Windows Desktop (`./gradlew :composeApp:run`)
+- [ ] Bug fix (non-breaking, resolves an existing issue)
+- [ ] New feature (non-breaking, adds new behavior)
+- [ ] Breaking change (alters existing behavior or public API)
+- [ ] Performance improvement
+- [ ] UI / UX improvement
+- [ ] Documentation update
+- [ ] Build or tooling change
+- [ ] Refactor (no behavior change)
+
+---
+
+## Testing
+
+Describe how the change was tested. Check all that apply.
+
+- [ ] Android debug build verified (`./gradlew :composeApp:installDebug`)
+- [ ] Android release build verified (`./gradlew :composeApp:assembleRelease`)
+- [ ] Desktop run verified (`./gradlew :composeApp:run`)
 - [ ] Unit tests pass (`./gradlew check`)
-- [ ] Tested on physical device: _(model, OS version)_
-- [ ] Tested on emulator: _(API level)_
+- [ ] Tested on physical device — model and OS version:
+- [ ] Tested on emulator — API level:
 
 ---
 
-## 📸 Screenshots / Demo (If Applicable)
+## Screenshots
+
+If this change affects the UI, provide before and after screenshots.
+
 | Before | After |
 |:---:|:---:|
-| _Attach screenshot_ | _Attach screenshot_ |
+| | |
 
 ---
 
-## ✅ Checklist
-- [ ] Code follows the project architecture (`commonMain` / `androidMain` / `desktopMain` separation).
-- [ ] Self-reviewed my own code.
-- [ ] Added comments where the logic is non-obvious.
+## Checklist
+
+- [ ] Code follows the platform-isolation model (`commonMain` / `androidMain` / `desktopMain`).
+- [ ] Self-reviewed the diff before opening this pull request.
+- [ ] Added inline comments where logic is non-obvious.
 - [ ] No new compiler warnings or lint errors introduced.
-- [ ] No proprietary libraries, ad SDKs, or network telemetry added (F-Droid compliance).
-- [ ] Updated documentation / `ROADMAP.md` if the feature is significant.
-- [ ] PR targets the `v2` branch.
+- [ ] No proprietary libraries, ad SDKs, telemetry, or network data-collection added.
+- [ ] Documentation or `ROADMAP.md` updated if the change introduces a significant new capability.
+- [ ] Pull request targets the `v2` branch.

@@ -1,37 +1,43 @@
 ---
-name: 💡 Feature Request
-about: Suggest an idea or enhancement for Void Player
-title: '[FEATURE] '
+name: Feature Request
+about: Propose a new feature or enhancement for Void Player.
+title: 'feat: '
 labels: ['enhancement', 'needs-triage']
 assignees: ''
 ---
 
-### 💡 What problem does this feature solve?
-A clear and concise description of the problem or limitation. Ex. *"I'm always frustrated when I can't..."*
+## Problem Statement
+
+Describe the problem or limitation this feature addresses. Be specific.
 
 ---
 
-### 🚀 Proposed Solution
-Describe what you would like to happen. Include UI mockups, sketches, or concept descriptions if possible.
+## Proposed Solution
+
+Describe the behavior you would like to see. Include UI descriptions, mockups, or references to similar implementations in other applications if they are helpful.
 
 ---
 
-### 📱 Target Platform
+## Target Platform
+
 - [ ] Android
 - [ ] Windows Desktop
-- [ ] All Platforms
+- [ ] All platforms
 
 ---
 
-### 🔄 Alternatives Considered
-Have you considered any alternative approaches? What are their trade-offs?
+## Privacy and FOSS Compliance
+
+Does this feature require internet access, external APIs, or third-party libraries? If yes, identify the services and confirm they are open source and do not transmit user data.
 
 ---
 
-### 🔒 Privacy / FOSS Impact
-Does this feature require internet access, external APIs, or third-party SDKs? If so, please describe and confirm these are open-source and privacy-friendly.
+## Alternatives Considered
+
+Describe any alternative approaches or workarounds you have considered, and explain why the proposed solution is preferable.
 
 ---
 
-### ℹ️ Additional Context
-Add any other context, screenshots, or links that might help explain the request.
+## Additional Context
+
+Any other relevant references, screenshots, or implementation notes.
