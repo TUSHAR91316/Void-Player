@@ -2,36 +2,53 @@
 name: 🐛 Bug Report
 about: Create a report to help us improve Void Player
 title: '[BUG] '
-labels: ['bug']
+labels: ['bug', 'needs-triage']
 assignees: ''
 ---
 
 ### 📌 Describe the Bug
 A clear and concise description of what the bug is.
 
+---
+
 ### 📱 Environment & Device Info
-- **App Version**: (e.g. `2.2`)
-- **Platform**: [Android / Windows Desktop]
-- **OS Version**: (e.g. Android 14 / Windows 11)
-- **Device Model**: (e.g. Google Pixel 8 / PC)
-- **Audio File Format**: (e.g. FLAC 24-bit, MP3 320kbps, AAC)
+| Field | Details |
+|---|---|
+| **App Version** | e.g. `2.2` |
+| **Platform** | Android / Windows Desktop |
+| **OS Version** | e.g. Android 14 / Windows 11 |
+| **Device Model** | e.g. Google Pixel 8 / HP Laptop |
+| **Audio Format** | e.g. FLAC 24-bit, MP3 320kbps, AAC |
+
+---
 
 ### 👣 Steps to Reproduce
-1. Go to '...'
-2. Click on '...'
-3. Scroll down to '...'
-4. See error
+1. Open app and go to '...'
+2. Tap on '...'
+3. Observe '...'
+4. See the error
+
+---
 
 ### 🎯 Expected Behavior
-A clear and concise description of what you expected to happen.
+What you expected to happen.
+
+### 🐛 Actual Behavior
+What actually happened instead.
+
+---
 
 ### 📸 Screenshots / Screen Recording
-If applicable, add screenshots or screen recordings to help explain your problem.
+<!-- Attach screenshots or a short screen recording if applicable -->
+
+---
 
 ### 📋 Logcat / Console Logs
 ```text
-Paste any relevant crash logs or logcat output here
+Paste any relevant crash logs, logcat output, or console errors here.
 ```
 
+---
+
 ### ℹ️ Additional Context
-Add any other context about the problem here (e.g. bluetooth headset used, specific folder location).
+Any other context — e.g. Bluetooth headset, specific audio folder path, custom ROM, or steps to reliably reproduce.
