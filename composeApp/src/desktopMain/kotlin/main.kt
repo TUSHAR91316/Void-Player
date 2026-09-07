@@ -17,9 +17,17 @@ import javax.sound.sampled.*
 import javax.swing.JFileChooser
 import javax.swing.UIManager
 
+
 fun main() = application {
     val repository = remember { DesktopSongRepository() }
-    val player = remember { DesktopAudioPlayer() }
+    val player: AudioPlayer = remember {
+        val osName = System.getProperty("os.name").lowercase()
+        if (osName.contains("linux")) {
+            VlcAudioPlayer()
+        } else {
+            JavaDesktopAudioPlayer()
+        }
+    }
 
     val pickedFolderUri = remember { mutableStateOf<String?>(null) }
     var statusMessage by remember { mutableStateOf("Ready") }
@@ -268,7 +276,7 @@ class DesktopSongRepository : SongRepository {
     }
 }
 
-class DesktopAudioPlayer : AudioPlayer {
+class JavaDesktopAudioPlayer : AudioPlayer {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val _isPlaying = MutableStateFlow(false)
