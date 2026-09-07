@@ -198,12 +198,6 @@ See [SECURITY.md](./SECURITY.md) for the responsible disclosure policy.
 
 ---
 
-## Roadmap
-
-See [ROADMAP.md](./ROADMAP.md) for planned features in Version 2.3 and beyond.
-
----
-
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
