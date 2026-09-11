@@ -11,9 +11,9 @@
   <li><b>AI DJ Smart Flow:</b> Predicts and queues smooth-transitioning next tracks based on tempo and mood.</li>
   <li><b>AI Smart Categorization:</b> Automatically organizes tracks into Night Vibes, High Energy, Deep Focus, Romance, and Quick Hits.</li>
   <li><b>Hi-Res Audio Codec Inspector:</b> Detects FLAC (24-bit/96kHz), WAV, AAC, and 320kbps MP3 with interactive details.</li>
-  <li><b>Synchronized LRC Lyrics:</b> Real-time lyrics viewer with auto-scroll and tap-to-seek.</li>
+  <li><b>Synchronized Lyrics & LRCLIB:</b> Real-time LRC viewer with auto-scroll, tap-to-seek, and automatic LRCLIB online fetching with offline caching.</li>
   <li><b>Persistent Playlists & Favorites:</b> Save and restore playlists and favorite tracks across restarts.</li>
   <li><b>Playback Speed & Sleep Timer:</b> 0.5x to 2.0x speed controls and gentle volume fade-out timer.</li>
-  <li><b>Hardware Equalizer & DSP:</b> Multi-band EQ and real-time loudness normalization via Android DynamicsProcessing.</li>
+  <li><b>Hardware Equalizer & DSP:</b> 5-band hardware EQ, BassBoost (0-1000 strength), and real-time loudness normalization via Android DynamicsProcessing.</li>
   <li><b>Live Queue:</b> View and jump between upcoming tracks directly in the player.</li>
 </ul>

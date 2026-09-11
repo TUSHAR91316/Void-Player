@@ -7,6 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -416,10 +419,10 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 listOf(
-                    0 to "💿 Cover",
-                    1 to "📜 Lyrics",
-                    2 to "📋 Queue",
-                    3 to "⚡ Speed"
+                    0 to "Cover",
+                    1 to "Lyrics",
+                    2 to "Queue",
+                    3 to "Speed"
                 ).forEach { (mode, label) ->
                     val isSelected = selectedViewMode == mode
                     Box(
@@ -461,9 +464,9 @@ fun NowPlayingScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Format: ${codecInfo.formatName}", color = PrimaryText, fontWeight = FontWeight.Medium)
-                    Text("Bitrate: ${codecInfo.bitrateEstimate}", color = SecondaryText)
-                    Text("Sample Rate: ${codecInfo.sampleRateEstimate}", color = SecondaryText)
-                    Text("Quality: ${if (codecInfo.isLossless) "Studio Master / Lossless Audio" else "Standard Compressed Audio"}", color = SecondaryText)
+                    Text("Bitrate Profile: ${codecInfo.bitrateEstimate}", color = SecondaryText)
+                    Text("Sample Rate Profile: ${codecInfo.sampleRateEstimate}", color = SecondaryText)
+                    Text("Container: ${if (codecInfo.isLossless) "Studio Master / Lossless Stream" else "Standard Compressed Audio"}", color = SecondaryText)
                     Text("Path: ${song.uri}", color = SecondaryText.copy(alpha = 0.7f), fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             },
@@ -487,10 +490,15 @@ fun LyricsViewer(
     var rawLyrics by remember { mutableStateOf<String?>(null) }
     var parsedLyrics by remember { mutableStateOf<List<LrcLine>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var isFetchingOnline by remember { mutableStateOf(false) }
+    var showManualSearchDialog by remember { mutableStateOf(false) }
+    var statusMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(song.id) {
         isLoading = true
-        rawLyrics = repository.loadLyrics(song.uri)
+        statusMessage = null
+        rawLyrics = repository.loadLyrics(song) ?: repository.loadLyrics(song.uri)
         parsedLyrics = rawLyrics?.let { LrcParser.parse(it) } ?: emptyList()
         isLoading = false
     }
@@ -522,37 +530,280 @@ fun LyricsViewer(
         contentAlignment = Alignment.Center
     ) {
         when {
-            isLoading -> CircularProgressIndicator(color = accentColor)
+            isLoading || isFetchingOnline -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = accentColor)
+                    if (isFetchingOnline) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Searching LRCLIB for synced lyrics...", color = SecondaryText, fontSize = 13.sp)
+                    }
+                }
+            }
             parsedLyrics.isNotEmpty() -> {
-                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                    itemsIndexed(parsedLyrics) { index, line ->
-                        val isHighlighted = index == activeIndex
-                        Text(
-                            text = line.text,
-                            color = if (isHighlighted) accentColor else PrimaryText.copy(alpha = 0.5f),
-                            fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = if (isHighlighted) 20.sp else 16.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .clickable { player.seekTo(line.timestampMs) }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        itemsIndexed(parsedLyrics) { index, line ->
+                            val isHighlighted = index == activeIndex
+                            Text(
+                                text = line.text,
+                                color = if (isHighlighted) accentColor else PrimaryText.copy(alpha = 0.5f),
+                                fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = if (isHighlighted) 20.sp else 16.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    .clickable { player.seekTo(line.timestampMs) }
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = { showManualSearchDialog = true },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.5f))
+                    ) {
+                        Icon(
+                            Icons.Filled.Search,
+                            contentDescription = "Search Lyrics",
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
             !rawLyrics.isNullOrBlank() -> {
-                Text(rawLyrics!!, color = PrimaryText, textAlign = TextAlign.Center)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        item {
+                            Text(rawLyrics!!, color = PrimaryText, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                    IconButton(
+                        onClick = { showManualSearchDialog = true },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.5f))
+                    ) {
+                        Icon(
+                            Icons.Filled.Search,
+                            contentDescription = "Search Lyrics",
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
             }
             else -> {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
                     Icon(Icons.Filled.Subtitles, contentDescription = null, tint = SecondaryText, modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("No local .lrc lyrics found for this track", color = SecondaryText, textAlign = TextAlign.Center)
+                    Text("No local .lrc lyrics found for this track", color = SecondaryText, textAlign = TextAlign.Center, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                isFetchingOnline = true
+                                statusMessage = null
+                                val online = repository.fetchOnlineLyrics(song)
+                                if (!online.isNullOrBlank()) {
+                                    rawLyrics = online
+                                    parsedLyrics = LrcParser.parse(online)
+                                } else {
+                                    statusMessage = "No exact match on LRCLIB. Try manual search below."
+                                }
+                                isFetchingOnline = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(Icons.Filled.CloudDownload, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Fetch Online Lyrics", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    TextButton(onClick = { showManualSearchDialog = true }) {
+                        Icon(Icons.Filled.Search, contentDescription = null, tint = accentColor, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Search by Title / Artist", color = accentColor, fontSize = 13.sp)
+                    }
+
+                    if (statusMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(statusMessage!!, color = Color(0xFFFFB74D), fontSize = 12.sp, textAlign = TextAlign.Center)
+                    }
                 }
             }
         }
     }
+
+    if (showManualSearchDialog) {
+        LyricsSearchDialog(
+            initialQuery = "${song.title} ${song.artist}".replace("Unknown", "").trim(),
+            repository = repository,
+            accentColor = accentColor,
+            onDismiss = { showManualSearchDialog = false },
+            onSelectLyrics = { chosenLyrics ->
+                scope.launch {
+                    repository.saveLyrics(song, chosenLyrics)
+                    rawLyrics = chosenLyrics
+                    parsedLyrics = LrcParser.parse(chosenLyrics)
+                    showManualSearchDialog = false
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun LyricsSearchDialog(
+    initialQuery: String,
+    repository: SongRepository,
+    accentColor: Color,
+    onDismiss: () -> Unit,
+    onSelectLyrics: (String) -> Unit
+) {
+    var query by remember { mutableStateOf(initialQuery) }
+    var isSearching by remember { mutableStateOf(false) }
+    var results by remember { mutableStateOf<List<com.tushar.voidplayer.data.LyricsSearchResult>>(emptyList()) }
+    var hasSearched by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Search Synced Lyrics", fontWeight = FontWeight.Bold, color = PrimaryText, fontSize = 18.sp)
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Track title or artist", color = SecondaryText) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            if (query.isNotBlank()) {
+                                scope.launch {
+                                    isSearching = true
+                                    results = repository.searchOnlineLyrics(query)
+                                    hasSearched = true
+                                    isSearching = false
+                                }
+                            }
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accentColor,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        focusedTextColor = PrimaryText,
+                        unfocusedTextColor = PrimaryText
+                    ),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            if (query.isNotBlank()) {
+                                scope.launch {
+                                    isSearching = true
+                                    results = repository.searchOnlineLyrics(query)
+                                    hasSearched = true
+                                    isSearching = false
+                                }
+                            }
+                        }) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search", tint = accentColor)
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                when {
+                    isSearching -> {
+                        Box(modifier = Modifier.fillMaxWidth().height(140.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = accentColor)
+                        }
+                    }
+                    results.isNotEmpty() -> {
+                        LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 280.dp)) {
+                            items(results) { item ->
+                                val hasSynced = !item.syncedLyrics.isNullOrBlank()
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            val chosen = item.syncedLyrics ?: item.plainLyrics ?: ""
+                                            if (chosen.isNotBlank()) {
+                                                onSelectLyrics(chosen)
+                                            }
+                                        },
+                                    color = Color.White.copy(alpha = 0.06f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                item.trackName,
+                                                color = PrimaryText,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp,
+                                                maxLines = 1
+                                            )
+                                            Text(
+                                                "${item.artistName} • ${item.albumName}",
+                                                color = SecondaryText,
+                                                fontSize = 12.sp,
+                                                maxLines = 1
+                                            )
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(if (hasSynced) accentColor.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.1f))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                if (hasSynced) "Synced" else "Plain",
+                                                color = if (hasSynced) accentColor else SecondaryText,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    hasSearched -> {
+                        Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                            Text("No lyrics found on LRCLIB for '$query'", color = SecondaryText, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = SecondaryText)
+            }
+        },
+        containerColor = SurfaceElevated
+    )
 }
 
 @Composable

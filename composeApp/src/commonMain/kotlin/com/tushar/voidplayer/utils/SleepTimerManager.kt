@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 object SleepTimerManager {
     private var timerJob: Job? = null
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val _remainingSeconds = MutableStateFlow(0L)
     val remainingSeconds: StateFlow<Long> = _remainingSeconds.asStateFlow()
@@ -73,5 +73,10 @@ object SleepTimerManager {
         _remainingSeconds.value = 0L
         fadeCallback?.invoke(1.0f)
         fadeCallback = null
+    }
+
+    fun cleanUp() {
+        cancel()
+        scope.coroutineContext.cancelChildren()
     }
 }

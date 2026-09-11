@@ -28,7 +28,9 @@ import com.tushar.voidplayer.ui.theme.*
 import com.tushar.voidplayer.ui.components.*
 import com.tushar.voidplayer.utils.AiCategorizer
 import com.tushar.voidplayer.utils.AiEngine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // ------------------------------------------------------------------
 // Sort order
@@ -48,13 +50,30 @@ fun App(
     statusMessage: String = "",
     onPickFolder: () -> Unit = {}
 ) {
+    PlatformApp(
+        repository = repository,
+        player = player,
+        pickedFolderUri = pickedFolderUri,
+        statusMessage = statusMessage,
+        onPickFolder = onPickFolder
+    )
+}
+
+@Composable
+fun MobileApp(
+    repository: SongRepository,
+    player: AudioPlayer,
+    pickedFolderUri: State<String?> = mutableStateOf(null),
+    statusMessage: String = "",
+    onPickFolder: () -> Unit = {}
+) {
     val currentSong by player.currentSong.collectAsState()
 
     // Dynamic theme accent color
     var accentColor by remember { mutableStateOf(DefaultAccent) }
     var currentArt by remember { mutableStateOf<ByteArray?>(null) }
 
-    // Step 1: when the song changes, load its art bytes (or read from color cache)
+    // Step 1: when the song changes, load its art bytes
     LaunchedEffect(currentSong?.id) {
         val song = currentSong
         if (song == null) {
@@ -65,9 +84,11 @@ fun App(
         val cachedColor = com.tushar.voidplayer.utils.ColorCache.get(song.id.toString())
         if (cachedColor != null) {
             accentColor = cachedColor
-            currentArt = null
-        } else {
-            currentArt = repository.loadArt(song.uri)
+        }
+        val art = song.coverArt ?: repository.loadArt(song.uri)
+        currentArt = art
+        if (art != null && song.coverArt == null) {
+            player.updateSongArt(song.id, art)
         }
     }
 
@@ -250,8 +271,10 @@ fun MainContent(
         }
     }
 
-    val aiCategories by remember(songs) {
-        derivedStateOf { AiCategorizer.categorize(songs) }
+    val aiCategories by produceState(initialValue = emptyList(), songs) {
+        value = withContext(Dispatchers.Default) {
+            AiCategorizer.categorize(songs)
+        }
     }
 
     val favoriteCount by remember(songs) { derivedStateOf { songs.count { it.isFavorite } } }
@@ -289,7 +312,7 @@ fun MainContent(
                         FilterChip(
                             selected = selectedTrackFilter == 1,
                             onClick = { selectedTrackFilter = 1 },
-                            label = { Text("♥ Favs ($favoriteCount)") },
+                            label = { Text("Favorites ($favoriteCount)") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = accentColor,
                                 selectedLabelColor = Color.Black
@@ -392,7 +415,7 @@ fun MainContent(
                     filteredSongs.isEmpty() -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(
-                                text = if (selectedTrackFilter == 1) "No favorite songs yet\nTap ♥ on any song to add it"
+                                text = if (selectedTrackFilter == 1) "No favorite songs yet\nTap the favorite icon on any song to add it"
                                        else "No songs match \"$searchQuery\"",
                                 color = SecondaryText,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -414,6 +437,7 @@ fun MainContent(
                                     accentColor = accentColor,
                                     onToggleFavorite = ::onToggleFavorite,
                                     onAddToPlaylist = { songToAddToPlaylist = it },
+                                    onPlayNext = { player.playNext(it) },
                                     onClick = { player.play(song) }
                                 )
                             }
@@ -453,6 +477,7 @@ fun MainContent(
             AudioSettingsScreen(
                 onDismiss = { showSettings = false },
                 player = player,
+                repository = repository,
                 accentColor = accentColor
             )
         }

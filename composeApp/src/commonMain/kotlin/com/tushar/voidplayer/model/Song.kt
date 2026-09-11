@@ -18,7 +18,11 @@ data class Song(
     val duration: Long,
     val uri: String,
     val coverArt: ByteArray? = null,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val genre: String = "",
+    val bpm: Int = 0,
+    val acousticEnergy: Float = 0.5f,
+    val dominantMood: String = ""
 ) {
     // Equality and hash are based on identity (id + uri) only.
     // Metadata fields like isFavorite are intentionally excluded so that

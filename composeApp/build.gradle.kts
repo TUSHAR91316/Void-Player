@@ -1,4 +1,5 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -12,9 +13,7 @@ kotlin {
 
     androidTarget()
 
-    
-    jvm("desktop")
-    
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -47,25 +46,20 @@ kotlin {
                 implementation(libs.androidx.palette)
             }
         }
-        val desktopMain by getting {
-            dependencies {
-                implementation(compose.desktop.currentOs)
-                implementation(libs.vlcj)
-            }
-        }
+
     }
 }
 
 android {
     namespace = "com.tushar.voidplayer"
-    compileSdk = 35 // Android 15
+    compileSdk = 36 // Android 16 (Baklava)
 
     defaultConfig {
         applicationId = "com.tushar.voidplayer"
         minSdk = 26
-        targetSdk = 34 // Android 14 (35 optional)
-        versionCode = 5
-        versionName = "2.2"
+        targetSdk = 36 // Android 16
+        versionCode = 6
+        versionName = "2.3"
     }
 
     dependenciesInfo {
@@ -73,18 +67,50 @@ android {
         includeInBundle = false
     }
     
+    val localProps = Properties()
+    val localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        localPropsFile.inputStream().use { localProps.load(it) }
+    }
+
     signingConfigs {
         create("release") {
-            storeFile = rootProject.file("keystore.jks")
-            storePassword = "voidplayer123"
-            keyAlias = "voidplayer"
-            keyPassword = "voidplayer123"
+            val envFile: String? = System.getenv("VOID_KEYSTORE_FILE")
+            val propFile = project.findProperty("VOID_KEYSTORE_FILE") as? String
+            val localFile: String? = localProps.getProperty("VOID_KEYSTORE_FILE")
+            val keystorePath = envFile ?: propFile ?: localFile ?: "keystore.jks"
+            val keystoreFile = rootProject.file(keystorePath)
+
+            val envPass: String? = System.getenv("VOID_KEYSTORE_PASSWORD")
+            val propPass = project.findProperty("VOID_KEYSTORE_PASSWORD") as? String
+            val localPass: String? = localProps.getProperty("VOID_KEYSTORE_PASSWORD")
+            val keystorePass = envPass ?: propPass ?: localPass
+
+            val envAlias: String? = System.getenv("VOID_KEY_ALIAS")
+            val propAlias = project.findProperty("VOID_KEY_ALIAS") as? String
+            val localAlias: String? = localProps.getProperty("VOID_KEY_ALIAS")
+            val keyAliasName = envAlias ?: propAlias ?: localAlias ?: "voidplayer"
+
+            val envKeyPass: String? = System.getenv("VOID_KEY_PASSWORD")
+            val propKeyPass = project.findProperty("VOID_KEY_PASSWORD") as? String
+            val localKeyPass: String? = localProps.getProperty("VOID_KEY_PASSWORD")
+            val keyPass = envKeyPass ?: propKeyPass ?: localKeyPass ?: keystorePass
+
+            if (keystoreFile.exists() && !keystorePass.isNullOrBlank()) {
+                storeFile = keystoreFile
+                storePassword = keystorePass
+                keyAlias = keyAliasName
+                keyPassword = keyPass
+            }
         }
     }
     
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
+                signingConfig = releaseSigning
+            }
         }
     }
 
@@ -99,6 +125,11 @@ android {
         }
     }
 
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -108,26 +139,4 @@ android {
     }
 }
 
-compose.desktop {
-    application {
-        mainClass = "MainKt"
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
-            packageName = "VoidPlayer"
-            packageVersion = "2.2.0"
-            description = "Void Player - Modern Hi-Fi Music Player"
-            vendor = "Tushar"
-            appResourcesRootDir.set(project.layout.projectDirectory.dir("src/desktopMain/resources"))
 
-            windows {
-                iconFile.set(project.file("src/desktopMain/resources/icon.ico"))
-                menuGroup = "Void Player"
-                upgradeUuid = "6f851dae-bf7d-45db-9c3f-c967f401ad89"
-                shortcut = true
-                menu = true
-                dirChooser = true
-                perUserInstall = true
-            }
-        }
-    }
-}

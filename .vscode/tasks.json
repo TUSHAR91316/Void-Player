@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/desktop-winui/VoidPlayer.WinUI.csproj",
+                "-r",
+                "win-x64"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

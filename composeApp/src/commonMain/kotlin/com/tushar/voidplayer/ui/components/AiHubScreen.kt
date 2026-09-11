@@ -95,7 +95,7 @@ fun AiHubScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "✨ AI Smart Categories",
+                        text = "AI Smart Categories",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = PrimaryText
                     )
@@ -138,7 +138,7 @@ fun AiHubScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "${category.emoji} ${category.title}",
+                        text = category.title,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryText,
                         fontSize = 18.sp
@@ -170,7 +170,9 @@ fun AiHubScreen(
                             isPlaying = song.id == player.currentSong.collectAsState().value?.id,
                             accentColor = accentColor,
                             onToggleFavorite = onToggleFavorite,
+                            onPlayNext = { player.playNext(it) },
                             onClick = {
+                                player.setPlaylist(category.songs)
                                 player.play(song)
                                 selectedCategory = null
                             }
@@ -243,7 +245,7 @@ fun VoidAiInsightsCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "${insights.vibeEmoji} ${insights.personalityTitle}",
+                text = insights.personalityTitle,
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
@@ -287,27 +289,58 @@ fun VoidAiInsightsCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Recommended EQ curve badge
+            // Recommended EQ & SML Energy Badges
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color.White.copy(alpha = 0.1f))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    Icons.Filled.GraphicEq,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "AI Suggested EQ: ${insights.recommendedEq}",
-                    color = Color.White,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.White.copy(alpha = 0.1f))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.GraphicEq,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "EQ: ${insights.recommendedEq}",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.White.copy(alpha = 0.1f))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.Bolt,
+                        contentDescription = null,
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Energy: ${(insights.averageAcousticEnergy * 100).toInt()}%",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

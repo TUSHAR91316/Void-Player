@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="VoidPlayer.WinUI.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer Padding="32,24,32,32">
+        <StackPanel Spacing="24"
+                    MaxWidth="760"
+                    HorizontalAlignment="Left">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Settings"
+                           FontSize="28"
+                           FontWeight="Bold"/>
+                <TextBlock Text="Manage your playback preferences, music library, and desktop performance"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           FontSize="13"/>
+            </StackPanel>
+
+            <!-- 1. PLAYBACK & AUDIO PREFERENCES -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20">
+                <StackPanel Spacing="18">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="10">
+                        <FontIcon Glyph="&#xE8D6;"
+                                  FontSize="20"
+                                  Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
+                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Audio &amp; Playback Engine"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Speed Pills -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Default Playback Speed"
+                                   FontSize="13"
+                                   FontWeight="Medium"/>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <Button x:Name="Speed05Button"
+                                    Content="0.5x"
+                                    Tag="0.5"
+                                    Click="OnSpeedOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Speed075Button"
+                                    Content="0.75x"
+                                    Tag="0.75"
+                                    Click="OnSpeedOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Speed10Button"
+                                    Content="1.0x (Normal)"
+                                    Tag="1.0"
+                                    Click="OnSpeedOptionClick"
+                                    Style="{StaticResource VoidActivePillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Speed125Button"
+                                    Content="1.25x"
+                                    Tag="1.25"
+                                    Click="OnSpeedOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Speed15Button"
+                                    Content="1.5x"
+                                    Tag="1.5"
+                                    Click="OnSpeedOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Speed20Button"
+                                    Content="2.0x"
+                                    Tag="2.0"
+                                    Click="OnSpeedOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Sleep Timer Pills -->
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock Text="Sleep Timer"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="{x:Bind SleepTimerStatusText, Mode=OneWay}"
+                                       FontSize="12"
+                                       Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <Button x:Name="SleepOffButton"
+                                    Content="Off"
+                                    Tag="0"
+                                    Click="OnSleepTimerOptionClick"
+                                    Style="{StaticResource VoidActivePillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Sleep15Button"
+                                    Content="15m"
+                                    Tag="15"
+                                    Click="OnSleepTimerOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Sleep30Button"
+                                    Content="30m"
+                                    Tag="30"
+                                    Click="OnSleepTimerOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Sleep45Button"
+                                    Content="45m"
+                                    Tag="45"
+                                    Click="OnSleepTimerOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                            <Button x:Name="Sleep60Button"
+                                    Content="60m"
+                                    Tag="60"
+                                    Click="OnSleepTimerOptionClick"
+                                    Style="{StaticResource VoidPillButtonStyle}"
+                                    Padding="12,6,12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Audio Normalization Switch -->
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0"
+                                    Spacing="2">
+                            <TextBlock Text="Dynamic Audio Leveling &amp; Normalization"
+                                       FontSize="13"
+                                       FontWeight="Medium"/>
+                            <TextBlock Text="Smooths volume variations across different tracks and albums automatically."
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                        <ToggleSwitch x:Name="NormalizationToggle"
+                                      Grid.Column="1"
+                                      IsOn="{x:Bind ViewModel.Player.IsNormalizationEnabled, Mode=TwoWay}"
+                                      Toggled="OnNormalizationToggled"
+                                      OnContent="Active"
+                                      OffContent="Off"
+                                      VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 2. MUSIC LIBRARY FOLDERS -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20">
+                <StackPanel Spacing="16">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="10">
+                            <FontIcon Glyph="&#xED25;"
+                                      FontSize="20"
+                                      Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Text="Music Library Folders"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Click="OnAddFolderClick">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6">
+                                <FontIcon Glyph="&#xE710;"
+                                          FontSize="13"/>
+                                <TextBlock Text="Add Folder"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Void Player monitors these directories for lossless FLAC, WAV, AAC, and MP3 files:"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               FontSize="13"/>
+
+                    <ListView ItemsSource="{x:Bind ViewModel.Library.MonitoredFolders, Mode=OneWay}"
+                              SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Grid Padding="0,6,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="8"
+                                                Grid.Column="0">
+                                        <FontIcon Glyph="&#xE8B7;"
+                                                  FontSize="14"
+                                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                  VerticalAlignment="Center"/>
+                                        <TextBlock Text="{x:Bind}"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="13"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Style="{StaticResource SubtleButtonStyle}"
+                                            Click="OnRemoveFolderClick"
+                                            Tag="{x:Bind}"
+                                            ToolTipService.ToolTip="Remove Folder">
+                                        <FontIcon Glyph="&#xE74D;"
+                                                  FontSize="14"
+                                                  Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Button Style="{StaticResource DefaultButtonStyle}"
+                            Click="OnRescanClick"
+                            HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <FontIcon Glyph="&#xE72C;"
+                                      FontSize="14"/>
+                            <TextBlock Text="Rescan All Folders"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. RAM & DESKTOP PERFORMANCE MANAGEMENT -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20">
+                <StackPanel Spacing="16">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="10">
+                            <FontIcon Glyph="&#xE950;"
+                                      FontSize="20"
+                                      Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Text="RAM &amp; Memory Optimization"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Live Memory Badge -->
+                        <Border HorizontalAlignment="Right"
+                                Background="{x:Bind ViewModel.DynamicGlowBrush, Mode=OneWay}"
+                                BorderBrush="{x:Bind ViewModel.DynamicBorderBrush, Mode=OneWay}"
+                                BorderThickness="1"
+                                Padding="10,4,10,4"
+                                CornerRadius="6">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6">
+                                <TextBlock Text="Working Set:"
+                                           FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Text="{x:Bind MemoryUsageText, Mode=OneWay}"
+                                           FontSize="13"
+                                           FontWeight="Bold"
+                                           Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <TextBlock Text="Void Player uses native Windows optimizations to maintain a featherweight footprint:"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               FontSize="13"/>
+
+                    <!-- Optimization Checklist -->
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <FontIcon Glyph="&#xE73E;"
+                                      FontSize="13"
+                                      Foreground="#00E676"/>
+                            <TextBlock Text="Workstation GC mode active (aggressive compact client heap)"
+                                       FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <FontIcon Glyph="&#xE73E;"
+                                      FontSize="13"
+                                      Foreground="#00E676"/>
+                            <TextBlock Text="{x:Bind ViewModel.Player.AudioPipelineStatus, Mode=OneWay}"
+                                       FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <FontIcon Glyph="&#xE73E;"
+                                      FontSize="13"
+                                      Foreground="#00E676"/>
+                            <TextBlock Text="UI virtualization active (only visible items allocated in memory)"
+                                       FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <FontIcon Glyph="&#xE73E;"
+                                      FontSize="13"
+                                      Foreground="#00E676"/>
+                            <TextBlock Text="Sub-millisecond 32x32 dynamic palette extractor with caching"
+                                       FontSize="13"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="12">
+                        <Button Style="{StaticResource DefaultButtonStyle}"
+                                Click="OnCompactMemoryClick">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="8">
+                                <FontIcon Glyph="&#xE74C;"
+                                          FontSize="14"/>
+                                <TextBlock Text="Compact Memory Now"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SubtleButtonStyle}"
+                                Click="OnRefreshStatsClick">
+                            <FontIcon Glyph="&#xE72C;"
+                                      FontSize="14"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 4. EQUALIZER (from mobile/reference design) -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20">
+                <StackPanel Spacing="16">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="10">
+                            <FontIcon Glyph="&#xE9E9;"
+                                      FontSize="18"
+                                      Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Text="Hardware Equalizer &amp; Sound Profiles"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                Click="OnEqualizerResetClick">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6">
+                                <FontIcon Glyph="&#xE777;"
+                                          FontSize="12"/>
+                                <TextBlock Text="RESET"
+                                           FontSize="11"
+                                           FontWeight="Bold"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Hardware-accelerated DSP filters with real-time frequency response:"
+                               FontSize="13"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+
+                    <!-- Presets Pills -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8">
+                        <Button x:Name="EqFlatButton"
+                                Content="Flat"
+                                Tag="Flat"
+                                Click="OnEqualizerPresetClick"
+                                Style="{StaticResource VoidActivePillButtonStyle}"
+                                Padding="12,5,12,5"
+                                FontSize="12"/>
+                        <Button x:Name="EqBassButton"
+                                Content="Bass Boost"
+                                Tag="Bass Boost"
+                                Click="OnEqualizerPresetClick"
+                                Style="{StaticResource VoidPillButtonStyle}"
+                                Padding="12,5,12,5"
+                                FontSize="12"/>
+                        <Button x:Name="EqVocalButton"
+                                Content="Vocal Pop"
+                                Tag="Vocal Pop"
+                                Click="OnEqualizerPresetClick"
+                                Style="{StaticResource VoidPillButtonStyle}"
+                                Padding="12,5,12,5"
+                                FontSize="12"/>
+                        <Button x:Name="EqElectronicButton"
+                                Content="Electronic"
+                                Tag="Electronic"
+                                Click="OnEqualizerPresetClick"
+                                Style="{StaticResource VoidPillButtonStyle}"
+                                Padding="12,5,12,5"
+                                FontSize="12"/>
+                        <Button x:Name="EqAcousticButton"
+                                Content="Acoustic"
+                                Tag="Acoustic"
+                                Click="OnEqualizerPresetClick"
+                                Style="{StaticResource VoidPillButtonStyle}"
+                                Padding="12,5,12,5"
+                                FontSize="12"/>
+                    </StackPanel>
+
+                    <!-- 5-Band Slider Mockup -->
+                    <Grid ColumnSpacing="20"
+                          HorizontalAlignment="Stretch"
+                          Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0"
+                                    HorizontalAlignment="Center"
+                                    Spacing="6">
+                            <Slider x:Name="Eq60Slider"
+                                    Orientation="Vertical"
+                                    Height="100"
+                                    Minimum="-12"
+                                    Maximum="12"
+                                    Value="2"
+                                    ValueChanged="OnEqualizerSliderChanged"
+                                    Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+                            <TextBlock Text="60Hz"
+                                       FontSize="11"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1"
+                                    HorizontalAlignment="Center"
+                                    Spacing="6">
+                            <Slider x:Name="Eq230Slider"
+                                    Orientation="Vertical"
+                                    Height="100"
+                                    Minimum="-12"
+                                    Maximum="12"
+                                    Value="4"
+                                    ValueChanged="OnEqualizerSliderChanged"
+                                    Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+                            <TextBlock Text="230Hz"
+                                       FontSize="11"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2"
+                                    HorizontalAlignment="Center"
+                                    Spacing="6">
+                            <Slider x:Name="Eq910Slider"
+                                    Orientation="Vertical"
+                                    Height="100"
+                                    Minimum="-12"
+                                    Maximum="12"
+                                    Value="0"
+                                    ValueChanged="OnEqualizerSliderChanged"
+                                    Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+                            <TextBlock Text="910Hz"
+                                       FontSize="11"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3"
+                                    HorizontalAlignment="Center"
+                                    Spacing="6">
+                            <Slider x:Name="Eq36kSlider"
+                                    Orientation="Vertical"
+                                    Height="100"
+                                    Minimum="-12"
+                                    Maximum="12"
+                                    Value="3"
+                                    ValueChanged="OnEqualizerSliderChanged"
+                                    Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+                            <TextBlock Text="3.6kHz"
+                                       FontSize="11"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4"
+                                    HorizontalAlignment="Center"
+                                    Spacing="6">
+                            <Slider x:Name="Eq14kSlider"
+                                    Orientation="Vertical"
+                                    Height="100"
+                                    Minimum="-12"
+                                    Maximum="12"
+                                    Value="5"
+                                    ValueChanged="OnEqualizerSliderChanged"
+                                    Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+                            <TextBlock Text="14kHz"
+                                       FontSize="11"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 5. STORE & APP INFORMATION -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="About Void Player"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"/>
+                        <Border Background="#132B1F"
+                                CornerRadius="4"
+                                Padding="6,2,6,2"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="v2.3"
+                                       FontSize="10"
+                                       FontWeight="Bold"
+                                       Foreground="#00E575"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Text="Version 2.3.0 (WinUI 3 Native Desktop)"
+                               FontSize="13"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="Publisher: Byte-Labs • Designed for Windows 11 &amp; Microsoft Store"
+                               FontSize="13"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

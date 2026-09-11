@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/desktop-winui/">
+    <Project Path="desktop-winui/VoidPlayer.WinUI.csproj" />
+  </Folder>
+</Solution>

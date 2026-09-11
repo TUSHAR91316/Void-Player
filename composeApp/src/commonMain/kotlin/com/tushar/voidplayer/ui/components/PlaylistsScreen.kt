@@ -12,7 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -112,7 +112,7 @@ fun PlaylistsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    Icons.Filled.PlaylistPlay,
+                                    Icons.AutoMirrored.Filled.PlaylistPlay,
                                     contentDescription = null,
                                     tint = accentColor,
                                     modifier = Modifier.size(36.dp)
@@ -225,7 +225,9 @@ fun PlaylistsScreen(
                                 isPlaying = song.id == player.currentSong.collectAsState().value?.id,
                                 accentColor = accentColor,
                                 onToggleFavorite = onToggleFavorite,
+                                onPlayNext = { player.playNext(it) },
                                 onClick = {
+                                    player.setPlaylist(plSongs)
                                     player.play(song)
                                     selectedPlaylist = null
                                 }

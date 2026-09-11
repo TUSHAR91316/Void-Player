@@ -37,6 +37,7 @@ fun SongItem(
     accentColor: Color,
     onToggleFavorite: ((Song) -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
+    onPlayNext: ((Song) -> Unit)? = null,
     onClick: () -> Unit
 ) {
     val bitmap = com.tushar.voidplayer.utils.rememberSongImage(song, repository)
@@ -67,7 +68,7 @@ fun SongItem(
                 )
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("♪", color = SecondaryText, fontSize = 20.sp)
+                    Icon(Icons.Filled.MusicNote, contentDescription = null, tint = SecondaryText, modifier = Modifier.size(22.dp))
                 }
             }
 
@@ -126,7 +127,10 @@ fun SongItem(
             ) {
                 DropdownMenuItem(
                     text = { Text("Play Next") },
-                    onClick = { expanded = false }
+                    onClick = {
+                        expanded = false
+                        onPlayNext?.invoke(song)
+                    }
                 )
                 DropdownMenuItem(
                     text = { Text("Add to Playlist") },

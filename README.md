@@ -3,24 +3,29 @@
 <div align="center">
 
 <a href="https://f-droid.org/en/packages/com.tushar.voidplayer/">
-  <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="75">
+  <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="65">
+</a>
+&nbsp;&nbsp;
+<a href="https://www.microsoft.com/store/productId/9PCPXRSJ02RS?ocid=libraryshare">
+  <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft Store" height="65">
 </a>
 
 <br/><br/>
 
 [![F-Droid](https://img.shields.io/badge/F--Droid-Available-3DDC84?style=flat-square&logo=fdroid&logoColor=white)](https://f-droid.org/en/packages/com.tushar.voidplayer/)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-Void_Player-0078D4?style=flat-square&logo=windows11&logoColor=white)](https://www.microsoft.com/store/productId/9PCPXRSJ02RS?ocid=libraryshare)
 [![GitHub Release](https://img.shields.io/github/v/release/TUSHAR91316/Void-Player?style=flat-square&logo=github)](https://github.com/TUSHAR91316/Void-Player/releases/latest)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose_Multiplatform-1.7-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE)
 [![Android](https://img.shields.io/badge/Android-8.0+-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com/)
-[![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?style=flat-square&logo=windows&logoColor=white)](https://github.com/TUSHAR91316/Void-Player/releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?style=flat-square&logo=windows&logoColor=white)](https://www.microsoft.com/store/productId/9PCPXRSJ02RS?ocid=libraryshare)
 
 **A modern, high-fidelity, privacy-first local music player built with Kotlin Multiplatform and Compose Multiplatform.**
 
 100% Free and Open Source (FOSS) — Zero Ads — Zero Trackers — Zero Telemetry — 100% Offline
 
-[Get it on F-Droid](https://f-droid.org/en/packages/com.tushar.voidplayer/) &nbsp;·&nbsp; [Download APK](https://github.com/TUSHAR91316/Void-Player/releases/latest) &nbsp;·&nbsp; [Windows Installer](https://github.com/TUSHAR91316/Void-Player/releases/latest)
+[Get it on F-Droid](https://f-droid.org/en/packages/com.tushar.voidplayer/) &nbsp;·&nbsp; [Microsoft Store](https://www.microsoft.com/store/productId/9PCPXRSJ02RS?ocid=libraryshare) &nbsp;·&nbsp; [Download APK (GitHub Releases)](https://github.com/TUSHAR91316/Void-Player/releases/latest)
 
 </div>
 
@@ -62,53 +67,63 @@ A floating Mini-Player Pill sits above the navigation bar, displaying the curren
   - **Queue** — Live upcoming track list with one-tap jump-to-song.
   - **Controls** — Playback speed (0.5x to 2.0x, pitch-corrected) and Gentle Sleep Timer with volume fade-out.
 
-### AI Music Intelligence (Fully Offline)
+### AI Music Intelligence (Fully Offline SML Engine)
 
-All AI features run on-device using metadata heuristics. No internet connection or external API is used.
+Void Player features an embedded Small Machine Learning (SML) audio intelligence engine running 100% on-device. No internet connection, external APIs, or remote neural weights are utilized—ensuring total privacy and zero latency.
 
-- **Void AI Insights** — Analyzes library composition to produce a musical personality profile (e.g., "The Midnight Wanderer", "The High-Drive Dynamo"), vibe breakdown percentages, total library duration, top artist, and a recommended hardware EQ curve.
-- **AI DJ Smart Flow** — Scores candidate tracks by keyword similarity, artist affinity, and duration proximity to the current song, then selects the next track from the top-scoring matches.
-- **AI Smart Categorization** — Automatically groups tracks into mood and tempo collections: Night Vibes and Lo-Fi, High Energy and Workout, Deep Focus and Study, Romance and Melodic, Quick Hits (under 2.5 minutes), Extended Masterpieces, and Artist Spotlights for artists with two or more tracks.
+- **Multi-Feature Vector Classification** — Analyzes local tracks using multidimensional feature space modeling:
+  - **Genre Semantic Centroids**: Categorizes tracks across 12+ genre vector spaces (Night Vibes & Lo-Fi, High Energy & Workout, Deep Focus & Study, Romance & Heartfelt, Euphoric Pop, Late Night Drive & Synthwave, Acoustic Folk, Heavy Metal, and Extended Masterpieces).
+  - **Continuous Acoustic Energy Extraction**: Computes normalized intensity scores ($0.08 \dots 0.98$) combining genre baselines, embedded ID3/FLAC tempo (BPM), and duration curve dynamics.
+  - **Softmax Probability Calibration**: Normalizes feature distance scores through temperature-scaled softmax ($T=12.0$), yielding calibrated confidence ratings ($45\% \dots 99\%$) and eliminating unclassified fallback buckets.
+- **Harmonic DJ Smart Flow** — Generates seamless, harmonic playlist progressions without jarring tempo or energy spikes by evaluating transition compatibility:
+  $$\text{FlowScore}(A, B) = \text{MoodContinuity}(A, B) \times 0.45 + (1 - \Delta\text{Energy} \times 1.5) \times 0.35 + \left(1 - \frac{\Delta\text{BPM}}{60}\right) \times 0.20$$
+- **Void AI Insights ("My Vibe Wrapped")** — Aggregates library statistics to calculate your musical persona (such as *The Midnight Wanderer*, *The High-Drive Dynamo*, *The Deep Focus Architect*, or *The Neon Cruiser*), vibe breakdown percentages, library-wide acoustic energy averages, total listening duration, and recommended hardware equalizer presets.
+- **Smart Mood Collections** — Automatically organizes your local songs into dynamically clustered collections with custom gradient artwork, confidence indicators, and tailored audio DSP curves.
 
-### Audio Quality
+### Audio Quality & Hardware DSP
 
-- **Hi-Res Codec Detection** — Identifies FLAC (lossless), WAV (uncompressed PCM), AAC/M4A, OGG/Opus, and MP3 from the file extension and displays an appropriate quality badge.
-- **Codec Inspector** — Tap the badge to view the detected format, estimated sample rate, and estimated bitrate.
-- **Synchronized LRC Lyrics** — Parses `.lrc` files in the song's folder, timestamps each line, and auto-scrolls in real time. Tapping a lyric line seeks to that position.
-- **Sleep Timer** — Set a countdown timer; the last 20 seconds fade the volume to zero before pausing.
+- **Hardware Audio DSP & Equalizer** — Native integration with Android `android.media.audiofx.Equalizer` and `android.media.audiofx.BassBoost` (0–1000 strength), featuring persistent audio presets (*Flat*, *Bass Boost*, *Vocal Pop*, *Electronic*, *Rock*, *Acoustic*), custom band levels, and dynamics processing.
+- **Hi-Res Codec Detection** — Identifies FLAC (24-bit/96kHz lossless), WAV (uncompressed PCM), AAC HD, OGG/Opus, and MP3 (up to 320 kbps) directly from file streams and headers.
+- **Codec Inspector** — View real measured bitrates, bit depths, sample rates, channels, and container formats powered by native metadata extractors and TagLib.
+- **Dual-Engine Synchronized Lyrics** — Real-time LRC synchronized lyrics engine with auto-scroll and tap-to-seek:
+  - Reads local `.lrc` files in the song folder.
+  - Automatically fetches missing lyrics via the privacy-friendly LRCLIB database, storing them permanently in local offline cache (`lyrics_cache/`) for future playback.
+- **Gentle Sleep Timer** — Set a custom countdown timer; the final 20 seconds gently fade volume to zero before pausing.
 
 ### Persistence and Data
 
-- Custom playlists and favorite tracks are stored in `SharedPreferences` (Android) or `~/.voidplayer/` property files (Desktop).
-- The last selected folder is remembered and reloaded automatically on next launch.
+- Custom playlists, favorite tracks, hardware equalizer configurations, and playback states are stored locally in `SharedPreferences` (Android) or typed JSON app data files (Windows).
+- The last selected music folder is remembered and reloaded automatically on launch.
+- 100% offline and private: no cloud syncing, no data harvesting.
 
 ### Back Navigation
 
-A cross-platform `PlatformBackHandler` intercepts the system back gesture or key and navigates in priority order: close open dialogs, clear the active search query, return to the previous tab in the back stack, and finally return to the Library tab before allowing the app to exit.
+A cross-platform `PlatformBackHandler` intercepts system back gestures and keys in strict priority order: dismiss open modal sheets and dialogs, clear active search queries, return to previous navigation tabs, and return to the Library before allowing the app to exit.
 
-### Windows Desktop
+### Windows Desktop (Native WinUI 3)
 
-- Native directory chooser (`JFileChooser`) for selecting the music folder.
-- Java Sound (`AudioInputStream` / `Clip`) audio engine with seek, volume control, shuffle, and repeat.
-- Multi-resolution application icon embedded in the setup wizard and executable.
-- MSI installer with `perUserInstall = true` for in-place updates without administrator prompts.
+- Native Windows App SDK / WinUI 3 application (`desktop-winui`) with Mica material backdrops and smooth window chrome.
+- Spotify-style layout featuring a collapsible left navigation rail, center searchable library with column sorting, and split-pane right drawer for synced lyrics, live queue, and codec specifications.
+- Persistent full-width bottom player bar with responsive seek slider, volume control, mute toggle, and track artwork thumbnail.
+- TagLibSharp metadata extractor delivering precise codec specs without simulated estimates.
+- Distributed via the official Microsoft Store (`Byte-Labs.VoidPlayer`, Store ID: `9PCPXRSJ02RS`).
 
 ---
 
 ## Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Kotlin 2.x (Kotlin Multiplatform) |
-| UI Framework | Compose Multiplatform 1.7 (Material 3) |
-| Android Audio Engine | AndroidX Media3 / ExoPlayer |
-| Desktop Audio Engine | Java Sound SPI (AudioInputStream / Clip) |
-| State Management | MVVM with StateFlow and collectAsState |
-| Build System | Gradle KMP, JDK 21 |
-| Windows Packaging | WiX Toolset (MSI) |
-| Minimum Android SDK | API 26 (Android 8.0) |
-| Target Android SDK | API 35 (Android 15) |
-| Desktop Platform | Windows 10 / 11 (JVM 21) |
+| Layer | Android Mobile | Windows Desktop |
+|---|---|---|
+| Language | Kotlin 2.x | C# / .NET 10 |
+| UI Framework | Compose Multiplatform 1.7 (Material 3) | WinUI 3 / Windows App SDK 2.4 (Mica) |
+| Audio Engine | AndroidX Media3 / ExoPlayer | Windows Media Player API / WinUI Audio |
+| Audio DSP | Android AudioFX (BassBoost, Equalizer) | Native Software Equalizer & Dynamics |
+| AI / ML Engine | Embedded SML Vector Space Engine | Embedded SML Vector Space Engine |
+| Metadata Parser | Android MediaMetadataRetriever / SAF | TagLibSharp (ID3v2, FLAC, Vorbis) |
+| Lyrics Provider | Local LRC + LRCLIB Offline Cache | Local LRC + LRCLIB Offline Cache |
+| Minimum OS Version | Android 8.0 (API 26) | Windows 10 Build 19041+ / Windows 11 |
+| Target OS Version | Android 16 (API 36, Baklava) | Windows 11 (24H2 / SDK 10.0.26100.0) |
+| Packaging | F-Droid APK, Signed Release APK (GitHub) | Microsoft Store MSIX |
 
 ---
 
@@ -125,8 +140,11 @@ A cross-platform `PlatformBackHandler` intercepts the system back gesture or key
 
 ### Windows Desktop
 
-- **MSI Installer** (recommended): Download `VoidPlayer-2.2.0.msi` from [GitHub Releases](https://github.com/TUSHAR91316/Void-Player/releases/latest). Creates Desktop and Start Menu shortcuts. Re-run the installer at any time to update in place.
-- **Portable**: Download `VoidPlayer.exe` and run directly without installation.
+<a href="https://www.microsoft.com/store/productId/9PCPXRSJ02RS?ocid=libraryshare">
+  <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft Store" height="55">
+</a>
+
+- **Microsoft Store**: Install directly from the official [Microsoft Store](https://www.microsoft.com/store/productId/9PCPXRSJ02RS?ocid=libraryshare) (Product ID: `9PCPXRSJ02RS`) for automatic silent updates, sandbox security, and verified deployment.
 
 ---
 
@@ -160,19 +178,24 @@ cd Void-Player
 ## Repository Structure
 
 ```
-composeApp/
-├── commonMain/        # Shared Compose UI, player interface, data models, and utilities
-│   ├── ui/
-│   │   ├── components/    # BottomNavBar, MiniPlayerPill, NowPlayingScreen, AiHubScreen,
-│   │   │                  # PlaylistsScreen, SongList, Header, SettingsDialog
-│   │   └── theme/         # Material 3 color scheme and surface definitions
-│   ├── model/             # Song, Playlist, AiCategory data classes
-│   ├── player/            # AudioPlayer interface and RepeatMode, PlayerState definitions
-│   ├── data/              # SongRepository interface
-│   └── utils/             # AiEngine, AiCategorizer, LrcParser, AudioMetadataUtils,
-│                          # SleepTimerManager, ImageCache, MemoryUtils
-├── androidMain/       # Android: ExoPlayer, MediaSession, SAF scanning, Palette, OverlayService
-└── desktopMain/       # Desktop: Java Sound, JFileChooser, properties-based persistence
+Void-Player/
+├── composeApp/
+│   ├── commonMain/        # Shared Compose UI, player interface, data models, and utilities
+│   │   ├── ui/
+│   │   │   ├── components/    # BottomNavBar, MiniPlayerPill, NowPlayingScreen, AiHubScreen,
+│   │   │   │                  # PlaylistsScreen, SongList, Header, SettingsDialog
+│   │   │   └── theme/         # Material 3 dark color scheme and surface tokens
+│   │   ├── model/             # Song, Playlist, AiCategory immutable data models
+│   │   ├── player/            # AudioPlayer interface, RepeatMode, and PlayerState
+│   │   ├── data/              # SongRepository interface and local storage abstraction
+│   │   └── utils/             # SML AiEngine, AiCategorizer, LrcParser, AudioMetadataUtils,
+│   │                          # SleepTimerManager, ImageCache, MemoryUtils
+│   └── androidMain/       # Android: ExoPlayer, MediaSession, AudioFX DSP, SAF scanning, Palette
+└── desktop-winui/         # Windows Desktop: Native WinUI 3, Windows App SDK, TagLibSharp, Mica
+    ├── Views/             # ShellPage, LibraryView, AiHubView, NowPlayingView, SettingsView
+    ├── ViewModels/        # Reactive MVVM ViewModels with CommunityToolkit.Mvvm
+    ├── Services/          # AudioPlayerService, AiEngineService, TagLib MetadataService
+    └── Package.appxmanifest # MSIX identity and capabilities
 ```
 
 ---

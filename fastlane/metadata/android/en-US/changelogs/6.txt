@@ -1,0 +1,8 @@
+- Upgraded target SDK to Android 16 (API Level 36, Baklava)
+- Embedded on-device Small Machine Learning (SML) audio intelligence engine
+- Added Harmonic DJ Smart Flow progression sequencing for smooth transitions
+- Added online lyrics auto-fetching via privacy-friendly LRCLIB with offline caching
+- Added Android hardware audio DSP equalizer with custom band levels & BassBoost (0-1000)
+- Improved system media notification artwork extraction with safe downsampling
+- Replaced UI emojis with clean Material vector iconography
+- Performance optimizations and memory safety improvements

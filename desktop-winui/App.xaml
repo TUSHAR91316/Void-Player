@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="VoidPlayer.WinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VoidPlayer.WinUI"
+    xmlns:converters="using:VoidPlayer.WinUI.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- GLOBAL CONVERTERS -->
+            <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:BoolToPlayPauseIconConverter x:Key="BoolToPlayPauseIconConverter" />
+            <converters:RepeatModeToIconConverter x:Key="RepeatModeToIconConverter" />
+            <converters:RepeatModeToOpacityConverter x:Key="RepeatModeToOpacityConverter" />
+            <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+            <converters:VolumeToIconConverter x:Key="VolumeToIconConverter" />
+            <converters:BoolToHeartGlyphConverter x:Key="BoolToHeartGlyphConverter" />
+            <converters:BoolToHeartBrushConverter x:Key="BoolToHeartBrushConverter" />
+
+            <!-- VOID PLAYER DARK THEME BRUSHES -->
+            <SolidColorBrush x:Key="VoidBackgroundBrush" Color="#070C0A" />
+            <SolidColorBrush x:Key="VoidSurfaceBrush" Color="#0B130F" />
+            <SolidColorBrush x:Key="VoidCardBrush" Color="#0F1A14" />
+            <SolidColorBrush x:Key="VoidBorderBrush" Color="#1E3327" />
+            <SolidColorBrush x:Key="VoidAccentEmeraldBrush" Color="#00E575" />
+            <SolidColorBrush x:Key="VoidMutedTextBrush" Color="#8B9E94" />
+
+            <!-- SUBTLE BUTTON STYLE -->
+            <Style x:Key="SubtleButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="8,6,8,6" />
+                <Setter Property="CornerRadius" Value="8" />
+            </Style>
+
+            <!-- VOID PILL BUTTON STYLES -->
+            <Style x:Key="VoidPillButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="#0F1A14" />
+                <Setter Property="Foreground" Value="#E5E7EB" />
+                <Setter Property="BorderBrush" Value="#1E3327" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="Padding" Value="14,6,14,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="VoidActivePillButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="#00E575" />
+                <Setter Property="Foreground" Value="#000000" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="Padding" Value="14,6,14,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

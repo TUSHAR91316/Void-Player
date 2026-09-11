@@ -1,16 +1,65 @@
-# Gradle
+# Gradle & Android Build
 .gradle/
 build/
 */build/
+captures/
+*.apk
+*.aab
 
-# IDEA
+# Desktop WinUI (.NET / Visual Studio)
+desktop-winui/bin/
+desktop-winui/obj/
+[Bb]in/
+[Oo]bj/
+.vs/
+**/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# MSIX / AppX Packaging & Publish Artifacts
+AppPackages/
+BundleArtifacts/
+*.msix
+*.msixupload
+*.msixbundle
+*.appx
+*.appxbundle
+*.appxupload
+*.pubxml
+*.pubxml.user
+
+# Certificates, Signing Keys & Secrets (CRITICAL: Never commit to Git)
+*.pfx
+*.p12
+*.cer
+*.crt
+*.jks
+*.keystore
+*.key
+*.pem
+*.pepk
+*.der
+keystore.jks
+
+# Local Configuration & Environment Files
+local.properties
+*.local.properties
+*.local.json
+.env
+.env.*
+!.env.example
+
+# IDEA / Android Studio
 .idea/
 *.iml
 *.iws
 *.ipr
 
-# Local Configuration
-local.properties
+# VS Code Local Overrides
+.vscode/*.local.json
+.vscode/*.local.*
 
 # Kotlin
 .kotlin/
@@ -18,36 +67,39 @@ local.properties
 # OS Specific
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Logs and Temporary files
+# Logs, Dumps and Temporary Files
 *.log
 *.logcat
 *_log.txt
-*.apk
-*.msi
-*.exe
+*.binlog
+*.dump
+*.dmp
+*.crash
+hs_err_pid*.log
+replay_pid*.log
 desktop_build.log
 desktop_run_log.txt
 git_log.txt
 status_reset.txt
 
-# Root images (Temporary assets)
+# Root Images & Temporary Assets
 /*.png
 /*.webp
 imaged/
 
+# Binaries & Installers
+*.msi
+*.exe
+
 # Legacy Flutter
 legacy_flutter/build/
+legacy_flutter/.vs/
 
-# Local MD files
+# Local Notes & Documentation
 skil.md
 chat.md
 agent.md
 ROADMAP.md
-
-# Security
-keystore.jks
 F-Droid-Submission-Guide.md
-
-# Visual Studio workspace files
-legacy_flutter/.vs/

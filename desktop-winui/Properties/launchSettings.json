@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VoidPlayer.WinUI (Package)": {
+      "commandName": "Project"
+    },
+    "VoidPlayer.WinUI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

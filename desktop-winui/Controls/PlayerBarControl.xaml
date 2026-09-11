@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="VoidPlayer.WinUI.Controls.PlayerBarControl"
+    x:Name="RootControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:VoidPlayer.WinUI.Converters"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:BoolToPlayPauseIconConverter x:Key="BoolToPlayPauseIconConverter"/>
+        <converters:RepeatModeToIconConverter x:Key="RepeatModeToIconConverter"/>
+        <converters:RepeatModeToOpacityConverter x:Key="RepeatModeToOpacityConverter"/>
+        <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
+        <converters:VolumeToIconConverter x:Key="VolumeToIconConverter"/>
+        <converters:VolumeToPercentConverter x:Key="VolumeToPercentConverter"/>
+    </UserControl.Resources>
+
+    <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="16,12,16,10"
+            Height="92">
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"
+                                  MinWidth="220"/>
+                <ColumnDefinition Width="*"
+                                  MinWidth="260"/>
+                <ColumnDefinition Width="240"
+                                  MinWidth="180"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: Current Track Info & Codec Pill (Tap to expand) -->
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal"
+                        Spacing="12"
+                        VerticalAlignment="Center"
+                        IsTapEnabled="True"
+                        Tapped="OnTrackInfoTapped"
+                        ToolTipService.ToolTip="Expand Now Playing">
+                <!-- Cover Art -->
+                <Grid Width="52"
+                      Height="52"
+                      CornerRadius="8">
+                    <!-- Fallback placeholder -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            CornerRadius="8">
+                        <FontIcon Glyph="&#xE8D6;"
+                                  FontSize="20"
+                                  Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                    </Border>
+                    <!-- Actual cached artwork -->
+                    <Image x:Name="TrackArtImage"
+                           Stretch="UniformToFill"
+                           Source="{Binding ViewModel.Player.CurrentSong.ArtCachePath, ElementName=RootControl, Converter={StaticResource StringToImageSourceConverter}}"
+                           Visibility="{Binding ViewModel.Player.CurrentSong.ArtCachePath, ElementName=RootControl, Converter={StaticResource NullToVisibilityConverter}}"/>
+                </Grid>
+
+                <!-- Titles & Codec Badge -->
+                <StackPanel VerticalAlignment="Center"
+                            Spacing="2"
+                            MaxWidth="210">
+                    <TextBlock Text="{x:Bind ViewModel.Player.CurrentSong.Title, Mode=OneWay, FallbackValue='No track playing'}"
+                               FontWeight="SemiBold"
+                               FontSize="14"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{x:Bind ViewModel.Player.CurrentSong.Artist, Mode=OneWay, FallbackValue='Void Player'}"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <!-- Codec Badge -->
+                    <Border HorizontalAlignment="Left"
+                            Margin="0,2,0,0"
+                            Padding="6,1,6,1"
+                            CornerRadius="4"
+                            Background="{x:Bind ViewModel.DynamicGlowBrush, Mode=OneWay}"
+                            BorderBrush="{x:Bind ViewModel.DynamicBorderBrush, Mode=OneWay}"
+                            BorderThickness="1"
+                            Visibility="{x:Bind ViewModel.Player.CurrentSong, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                        <TextBlock Text="{x:Bind ViewModel.Player.CurrentSong.CodecBadge, Mode=OneWay}"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- CENTER: Controls & Progress Slider -->
+            <Grid Grid.Column="1"
+                  VerticalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Playback Buttons -->
+                <StackPanel Grid.Row="0"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+
+                    <!-- Shuffle -->
+                    <Button Width="36"
+                            Height="36"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Click="OnShuffleClick"
+                            Opacity="{x:Bind ViewModel.Player.IsShuffle, Mode=OneWay, Converter={StaticResource BoolToOpacityConverter}}"
+                            ToolTipService.ToolTip="Shuffle">
+                        <FontIcon Glyph="&#xE8B1;"
+                                  FontSize="15"/>
+                    </Button>
+
+                    <!-- Previous -->
+                    <Button Width="36"
+                            Height="36"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Click="OnPreviousClick"
+                            ToolTipService.ToolTip="Previous Track">
+                        <FontIcon Glyph="&#xE892;"
+                                  FontSize="16"/>
+                    </Button>
+
+                    <!-- Play / Pause (Accent Circle) -->
+                    <Button Width="44"
+                            Height="44"
+                            Padding="0"
+                            Margin="0,2,0,0"
+                            CornerRadius="22"
+                            Background="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Click="OnPlayPauseClick"
+                            ToolTipService.ToolTip="Play / Pause">
+                        <FontIcon Glyph="{x:Bind ViewModel.Player.IsPlaying, Mode=OneWay, Converter={StaticResource BoolToPlayPauseIconConverter}}"
+                                  FontSize="18"
+                                  Foreground="#000000"/>
+                    </Button>
+
+                    <!-- Next -->
+                    <Button Width="36"
+                            Height="36"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Click="OnNextClick"
+                            ToolTipService.ToolTip="Next Track">
+                        <FontIcon Glyph="&#xE893;"
+                                  FontSize="16"/>
+                    </Button>
+
+                    <!-- Repeat -->
+                    <Button Width="36"
+                            Height="36"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Click="OnRepeatClick"
+                            Opacity="{x:Bind ViewModel.Player.RepeatMode, Mode=OneWay, Converter={StaticResource RepeatModeToOpacityConverter}}"
+                            ToolTipService.ToolTip="Repeat Mode">
+                        <FontIcon Glyph="{x:Bind ViewModel.Player.RepeatMode, Mode=OneWay, Converter={StaticResource RepeatModeToIconConverter}}"
+                                  FontSize="15"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- Seek Slider with Time Indicators -->
+                <Grid Grid.Row="1"
+                      Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{x:Bind CurrentPositionText, Mode=OneWay}"
+                               FontSize="11"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+
+                    <Slider x:Name="PositionSlider"
+                            Grid.Column="1"
+                            Minimum="0"
+                            Maximum="{x:Bind TotalSeconds, Mode=OneWay}"
+                            Value="{x:Bind CurrentSeconds, Mode=TwoWay}"
+                            ValueChanged="OnPositionSliderValueChanged"
+                            VerticalAlignment="Center"
+                            Height="32"
+                            Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
+
+                    <TextBlock Grid.Column="2"
+                               Text="{x:Bind TotalDurationText, Mode=OneWay}"
+                               FontSize="11"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="8,0,0,0"/>
+                </Grid>
+            </Grid>
+
+            <!-- RIGHT: Volume & Now Playing Expand Button -->
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Spacing="8">
+
+                <!-- Volume Button with Flyout -->
+                <Button Width="36"
+                        Height="36"
+                        Style="{StaticResource SubtleButtonStyle}"
+                        ToolTipService.ToolTip="Volume">
+                    <FontIcon Glyph="{x:Bind ViewModel.Player.Volume, Mode=OneWay, Converter={StaticResource VolumeToIconConverter}}"
+                              FontSize="16"/>
+                    <Button.Flyout>
+                        <Flyout Placement="Top">
+                            <StackPanel Width="150"
+                                        Padding="8"
+                                        Spacing="4">
+                                <TextBlock Text="Volume"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"/>
+                                <Slider Minimum="0"
+                                        Maximum="100"
+                                        StepFrequency="1"
+                                        Value="{x:Bind ViewModel.Player.Volume, Mode=OneWay, Converter={StaticResource VolumeToPercentConverter}}"
+                                        ValueChanged="OnVolumeChanged"/>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+
+                <!-- Expand Dedicated Player -->
+                <Button Width="40"
+                        Height="36"
+                        Style="{StaticResource SubtleButtonStyle}"
+                        Click="OnExpandNowPlayingClick"
+                        ToolTipService.ToolTip="Expand Dedicated Player (Audio Codec Specs)">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6">
+                        <FontIcon Glyph="&#xE740;"
+                                  FontSize="15"/>
+                        <FontIcon Glyph="&#xE70E;"
+                                  FontSize="11"
+                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

@@ -72,7 +72,7 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
     override suspend fun getSongs(): List<Song> = withContext(Dispatchers.IO) {
         val songs = mutableListOf<Song>()
         val favIds = getFavoriteIds()
-        val projection = arrayOf(
+        val projectionList = mutableListOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
@@ -80,6 +80,10 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.ALBUM_ID
         )
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            projectionList.add(MediaStore.Audio.Media.GENRE)
+        }
+        val projection = projectionList.toTypedArray()
 
         val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         // Filter for music files only and exclude short audio clips (< 1 sec)
@@ -93,6 +97,9 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
                 val artistColumn   = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                 val albumColumn    = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
                 val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+                val genreColumn    = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    cursor.getColumnIndex(MediaStore.Audio.Media.GENRE)
+                } else -1
 
                 while (cursor.moveToNext()) {
                     val id       = cursor.getLong(idColumn)
@@ -100,10 +107,13 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
                     val artist   = cursor.getString(artistColumn)?.takeIf { it.isNotBlank() } ?: "Unknown Artist"
                     val album    = cursor.getString(albumColumn)?.takeIf { it.isNotBlank() } ?: "Unknown Album"
                     val duration = cursor.getLong(durationColumn)
+                    val genre    = if (genreColumn >= 0) cursor.getString(genreColumn)?.takeIf { it.isNotBlank() } ?: "" else ""
 
                     val contentUri = ContentUris.withAppendedId(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id
                     )
+
+                    val energy = com.tushar.voidplayer.utils.AiEngine.calculateAcousticEnergy(genre, 0, duration)
 
                     // Art is loaded lazily via ImageCache to keep initial load fast
                     songs.add(
@@ -115,7 +125,10 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
                             duration = duration,
                             uri = contentUri.toString(),
                             coverArt = null,
-                            isFavorite = favIds.contains(id.toString())
+                            isFavorite = favIds.contains(id.toString()),
+                            genre = genre,
+                            bpm = 0,
+                            acousticEnergy = energy
                         )
                     )
                 }
@@ -168,6 +181,9 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
         var album  = "Unknown Album"
         var duration = 0L
 
+        var genre = ""
+        var bpm = 0
+
         val retriever = MediaMetadataRetriever()
         try {
             retriever.setDataSource(context, file.uri)
@@ -179,6 +195,8 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
                            ?.takeIf { it.isNotBlank() } ?: album
             duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                            ?.toLongOrNull() ?: 0L
+            genre    = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
+                           ?.takeIf { it.isNotBlank() } ?: ""
         } catch (_: Exception) {
             // Fallback to filename — already set above
         } finally {
@@ -186,6 +204,7 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
         }
 
         val id = file.uri.toString().hashCode().toLong() and 0x7FFF_FFFF_FFFF_FFFFL
+        val energy = com.tushar.voidplayer.utils.AiEngine.calculateAcousticEnergy(genre, bpm, duration)
 
         return Song(
             id       = id,
@@ -195,7 +214,10 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
             duration = duration,
             uri      = file.uri.toString(),
             coverArt = null,
-            isFavorite = favIds.contains(id.toString())
+            isFavorite = favIds.contains(id.toString()),
+            genre    = genre,
+            bpm      = bpm,
+            acousticEnergy = energy
         )
     }
 
@@ -210,6 +232,31 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
         } finally {
             try { retriever.release() } catch (_: Throwable) {}
         }
+    }
+
+    private val lyricsCacheDir: java.io.File by lazy {
+        val dir = java.io.File(context.filesDir, "lyrics_cache")
+        if (!dir.exists()) dir.mkdirs()
+        dir
+    }
+
+    override suspend fun loadLyrics(song: Song): String? = withContext(Dispatchers.IO) {
+        // 1. Check local persistent lyrics cache
+        val cachedFile = java.io.File(lyricsCacheDir, "${song.id}.lrc")
+        if (cachedFile.exists()) {
+            try {
+                val cached = cachedFile.readText()
+                if (cached.isNotBlank()) return@withContext cached
+            } catch (_: Throwable) {}
+        }
+
+        // 2. Check local companion file in same directory
+        val localLyrics = loadLyrics(song.uri)
+        if (!localLyrics.isNullOrBlank()) {
+            return@withContext localLyrics
+        }
+
+        null
     }
 
     override suspend fun loadLyrics(uriString: String): String? = withContext(Dispatchers.IO) {
@@ -230,6 +277,51 @@ class AndroidSongRepository(private val context: Context) : SongRepository {
             android.util.Log.e("VoidPlayer", "Error searching for LRC lyrics", e)
         }
         null
+    }
+
+    override suspend fun fetchOnlineLyrics(song: Song): String? = withContext(Dispatchers.IO) {
+        // Check cache first
+        val cachedFile = java.io.File(lyricsCacheDir, "${song.id}.lrc")
+        if (cachedFile.exists()) {
+            try {
+                val text = cachedFile.readText()
+                if (text.isNotBlank()) return@withContext text
+            } catch (_: Throwable) {}
+        }
+
+        // Query LRCLIB API
+        val result = com.tushar.voidplayer.utils.LrclibApi.getLyrics(
+            trackName = song.title,
+            artistName = song.artist,
+            albumName = song.album,
+            durationSeconds = (song.duration / 1000).toInt()
+        )
+
+        val lyrics = result?.syncedLyrics ?: result?.plainLyrics
+        if (!lyrics.isNullOrBlank()) {
+            saveLyrics(song, lyrics)
+            return@withContext lyrics
+        }
+        null
+    }
+
+    override suspend fun searchOnlineLyrics(query: String): List<com.tushar.voidplayer.data.LyricsSearchResult> = withContext(Dispatchers.IO) {
+        com.tushar.voidplayer.utils.LrclibApi.searchLyrics(query)
+    }
+
+    override suspend fun saveLyrics(song: Song, lrcContent: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val file = java.io.File(lyricsCacheDir, "${song.id}.lrc")
+                file.writeText(lrcContent)
+            } catch (e: Throwable) {
+                android.util.Log.e("VoidPlayer", "Failed to cache lyrics for song ${song.id}", e)
+            }
+        }
+    }
+
+    override suspend fun checkForUpdates(): com.tushar.voidplayer.utils.UpdateInfo = withContext(Dispatchers.IO) {
+        com.tushar.voidplayer.utils.UpdateChecker.checkForUpdates(context)
     }
 
     private fun collectAudioFilesIterative(

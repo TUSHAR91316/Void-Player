@@ -14,8 +14,11 @@ interface AudioPlayer {
     val isNormalizationEnabled: StateFlow<Boolean>
     val playbackSpeed: StateFlow<Float>
     val currentQueue: StateFlow<List<Song>>
+    val bassBoostStrength: StateFlow<Int>
+    val currentEqPreset: StateFlow<String>
 
     fun play(song: Song)
+    fun playNext(song: Song)
     fun setPlaylist(songs: List<Song>)
     fun pause()
     fun resume()
@@ -29,6 +32,8 @@ interface AudioPlayer {
     fun cleanUp()
     fun setEqualizerBandLevel(bandIndex: Int, level: Int)
     fun resetEqualizer()
+    fun applyEqPreset(presetName: String)
+    fun setBassBoostStrength(strength: Int)
     fun toggleNormalization()
     fun updateSongArt(songId: Long, art: ByteArray)
     fun setPlaybackSpeed(speed: Float)

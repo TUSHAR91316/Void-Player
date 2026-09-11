@@ -6,6 +6,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
@@ -24,12 +25,27 @@ import com.tushar.voidplayer.ui.theme.SurfaceElevated
 import com.tushar.voidplayer.ui.theme.SurfaceVariant
 import com.tushar.voidplayer.ui.theme.SurfaceBackground
 
+import com.tushar.voidplayer.data.SongRepository
+import kotlinx.coroutines.launch
+
 @Composable
-fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor: Color) {
+fun AudioSettingsScreen(
+    onDismiss: () -> Unit,
+    player: AudioPlayer,
+    repository: SongRepository? = null,
+    accentColor: Color
+) {
     var showTerms by remember { mutableStateOf(false) }
     var showPrivacy by remember { mutableStateOf(false) }
     val isNormalizationEnabled by player.isNormalizationEnabled.collectAsState()
     val bands by player.equalizerBands.collectAsState()
+    val currentPreset by player.currentEqPreset.collectAsState()
+    val bassBoostStrength by player.bassBoostStrength.collectAsState()
+
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<com.tushar.voidplayer.utils.UpdateInfo?>(null) }
+    var updateStatusMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     // Full screen overlay
     Box(
@@ -38,12 +54,12 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
             .background(SurfaceBackground)
             .padding(top = 40.dp) // Status bar padding
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -223,6 +239,53 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Hardware Bass Booster Section
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                color = SurfaceElevated,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint = accentColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Hardware Bass Boost", color = PrimaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            text = "${(bassBoostStrength / 10)}%",
+                            color = accentColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = bassBoostStrength.toFloat(),
+                        onValueChange = { player.setBassBoostStrength(it.toInt()) },
+                        valueRange = 0f..1000f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = accentColor,
+                            activeTrackColor = accentColor,
+                            inactiveTrackColor = Color.DarkGray
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Legal & About Section
             Surface(
                 modifier = Modifier
@@ -244,16 +307,74 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Updates & App Info
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                color = SurfaceElevated,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                        Text("Void Player v2.3", color = PrimaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        val statusText = updateStatusMessage ?: "Tap to check for new releases on GitHub & F-Droid"
+                        Text(statusText, color = if (updateStatusMessage != null) accentColor else Color.Gray, fontSize = 12.sp)
+                    }
+
+                    if (isCheckingUpdate) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = accentColor, strokeWidth = 2.dp)
+                    } else {
+                        Button(
+                            onClick = {
+                                if (repository != null) {
+                                    scope.launch {
+                                        isCheckingUpdate = true
+                                        updateStatusMessage = "Checking latest release..."
+                                        try {
+                                            val info = repository.checkForUpdates()
+                                            if (info.isUpdateAvailable) {
+                                                updateInfo = info
+                                                updateStatusMessage = "Update available: v${info.latestVersion}"
+                                            } else {
+                                                updateStatusMessage = "You're on the latest version (v2.3)"
+                                            }
+                                        } catch (e: Throwable) {
+                                            updateStatusMessage = "Check failed: offline or connection error"
+                                        } finally {
+                                            isCheckingUpdate = false
+                                        }
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f)),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text("Check Updates", color = PrimaryText, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Equalizer Section
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(bottom = 24.dp),
                 color = SurfaceElevated,
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(16.dp)
@@ -264,10 +385,33 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("EQUALIZER", color = accentColor, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        TextButton(onClick = { player.resetEqualizer() }) {
+                        TextButton(onClick = {
+                            player.resetEqualizer()
+                            player.setBassBoostStrength(0)
+                        }) {
                             Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reset", tint = PrimaryText, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("RESET", color = PrimaryText)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Preset Chips
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Flat", "Bass Boost", "Vocal Pop", "Electronic", "Rock", "Acoustic").forEach { preset ->
+                            FilterChip(
+                                selected = currentPreset.equals(preset, ignoreCase = true),
+                                onClick = { player.applyEqPreset(preset) },
+                                label = { Text(preset) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = accentColor,
+                                    selectedLabelColor = Color.Black
+                                )
+                            )
                         }
                     }
 
@@ -296,10 +440,12 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
                                         fontSize = 10.sp
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
+                                    val minVal = if (band.minLevel < band.maxLevel) band.minLevel.toFloat() else -1500f
+                                    val maxVal = if (band.minLevel < band.maxLevel) band.maxLevel.toFloat() else 1500f
                                     Slider(
-                                        value = band.level.toFloat(),
+                                        value = band.level.toFloat().coerceIn(minVal, maxVal),
                                         onValueChange = { player.setEqualizerBandLevel(index, it.toInt()) },
-                                        valueRange = band.minLevel.toFloat()..band.maxLevel.toFloat(),
+                                        valueRange = minVal..maxVal,
                                         modifier = Modifier.height(250.dp).graphicsLayer {
                                             rotationZ = -90f
                                         },
@@ -339,9 +485,17 @@ fun AudioSettingsScreen(onDismiss: () -> Unit, player: AudioPlayer, accentColor:
         AlertDialog(
             onDismissRequest = { showPrivacy = false },
             title = { Text("Privacy Policy", color = accentColor, fontWeight = FontWeight.Bold) },
-            text = { Text("VoidPlayer is fully offline. We do not collect, store, or transmit any user data, telemetry, or analytics. Storage permissions are used strictly to read local audio files, and overlay permissions are used strictly for the Player Island.", color = PrimaryText) },
+            text = { Text("VoidPlayer is fully offline. We do not collect, store, or transmit any user data, telemetry, or analytics. Storage permissions are used strictly to read local audio files.", color = PrimaryText) },
             confirmButton = { TextButton(onClick = { showPrivacy = false }) { Text("OK", color = accentColor) } },
             containerColor = SurfaceElevated
+        )
+    }
+
+    updateInfo?.let { info ->
+        UpdateDialog(
+            updateInfo = info,
+            accentColor = accentColor,
+            onDismiss = { updateInfo = null }
         )
     }
 }

@@ -1,0 +1,12 @@
+## Local Configuration Template for Void Player
+# Copy this file to 'local.properties' and configure your local values.
+# NEVER commit 'local.properties' to git.
+
+# Android SDK Path (typically set automatically by Android Studio)
+# sdk.dir=
+
+# Android Release Signing (Optional; configure in local.properties for release builds)
+# VOID_KEYSTORE_FILE=
+# VOID_KEYSTORE_PASSWORD=
+# VOID_KEY_ALIAS=
+# VOID_KEY_PASSWORD=

@@ -10,6 +10,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.*
@@ -93,7 +98,7 @@ fun AiCategoriesScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "${category.emoji} ${category.title}",
+                        text = category.title,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryText,
                         fontSize = 18.sp
@@ -125,7 +130,9 @@ fun AiCategoriesScreen(
                             isPlaying = song.id == player.currentSong.collectAsState().value?.id,
                             accentColor = accentColor,
                             onToggleFavorite = onToggleFavorite,
+                            onPlayNext = { player.playNext(it) },
                             onClick = {
+                                player.setPlaylist(category.songs)
                                 player.play(song)
                                 selectedCategory = null
                             }
@@ -170,23 +177,23 @@ fun AiCategoryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // AI Badge
+                // SML Badge
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.Black.copy(alpha = 0.4f))
+                        .background(Color.Black.copy(alpha = 0.45f))
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         Icons.Filled.AutoAwesome,
-                        contentDescription = "AI Categorized",
+                        contentDescription = "SML Categorized",
                         tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "AI Smart Category",
+                        text = "SML ${(category.confidence * 100).toInt()}% Match",
                         color = Color(0xFFFFD700),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
@@ -214,8 +221,21 @@ fun AiCategoryCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(category.emoji, fontSize = 28.sp)
-                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = getCategoryIcon(category.id),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
                 Column {
                     Text(
                         text = category.title,
@@ -233,12 +253,32 @@ fun AiCategoryCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Text(
-                text = "${category.songs.size} tracks available",
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${category.songs.size} tracks available",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "EQ: ${category.recommendedEq}",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 11.sp
+                )
+            }
         }
     }
+}
+
+private fun getCategoryIcon(id: String): androidx.compose.ui.graphics.vector.ImageVector = when {
+    id.contains("energy", ignoreCase = true) -> Icons.Filled.Bolt
+    id.contains("focus", ignoreCase = true) || id.contains("lofi", ignoreCase = true) -> Icons.Filled.Headphones
+    id.contains("night", ignoreCase = true) -> Icons.Filled.GraphicEq
+    id.contains("romance", ignoreCase = true) -> Icons.Filled.Favorite
+    id.contains("pop", ignoreCase = true) -> Icons.Filled.AutoAwesome
+    else -> Icons.Filled.MusicNote
 }

@@ -19,44 +19,44 @@ object AudioMetadataUtils {
 
         return when {
             uri.endsWith(".flac") || title.contains("flac") -> CodecInfo(
-                formatName = "FLAC Lossless",
+                formatName = "FLAC (Free Lossless Audio Codec)",
                 isLossless = true,
                 isHiRes = true,
-                badgeLabel = "✨ Hi-Res FLAC",
-                sampleRateEstimate = "24-bit / 96.0 kHz",
-                bitrateEstimate = "~1411 kbps Lossless"
+                badgeLabel = "Hi-Res FLAC",
+                sampleRateEstimate = "Up to 24-bit / 96.0 kHz Lossless",
+                bitrateEstimate = "Variable Bitrate (VBR Lossless)"
             )
             uri.endsWith(".wav") || title.contains("wav") -> CodecInfo(
-                formatName = "WAV PCM",
+                formatName = "WAV (Linear PCM Audio)",
                 isLossless = true,
                 isHiRes = true,
-                badgeLabel = "✨ Hi-Res WAV",
-                sampleRateEstimate = "16-bit / 44.1 kHz PCM",
-                bitrateEstimate = "1411.2 kbps Uncompressed"
+                badgeLabel = "Hi-Res WAV",
+                sampleRateEstimate = "16/24-bit / 44.1+ kHz PCM",
+                bitrateEstimate = "1411.2+ kbps Uncompressed"
             )
             uri.endsWith(".m4a") || uri.endsWith(".aac") -> CodecInfo(
-                formatName = "AAC / M4A",
+                formatName = "AAC / M4A (Advanced Audio Coding)",
                 isLossless = false,
                 isHiRes = false,
-                badgeLabel = "🎵 AAC HD",
-                sampleRateEstimate = "44.1 kHz Stereo",
-                bitrateEstimate = "256 kbps VBR"
+                badgeLabel = "AAC HD",
+                sampleRateEstimate = "44.1 / 48.0 kHz Stereo",
+                bitrateEstimate = "128 - 320 kbps VBR"
             )
             uri.endsWith(".ogg") || uri.endsWith(".opus") -> CodecInfo(
-                formatName = "OGG / Opus",
+                formatName = "OGG / Opus Audio",
                 isLossless = false,
                 isHiRes = false,
-                badgeLabel = "🎵 OPUS HD",
-                sampleRateEstimate = "48.0 kHz Stereo",
-                bitrateEstimate = "192 kbps"
+                badgeLabel = "OPUS HD",
+                sampleRateEstimate = "48.0 kHz Dynamic Stereo",
+                bitrateEstimate = "64 - 256 kbps Adaptive"
             )
             else -> CodecInfo(
-                formatName = "MPEG Audio (MP3)",
+                formatName = "MPEG-1 Audio Layer III (MP3)",
                 isLossless = false,
                 isHiRes = false,
-                badgeLabel = "🎵 320 kbps MP3",
-                sampleRateEstimate = "44.1 kHz Stereo",
-                bitrateEstimate = "320 kbps CBR"
+                badgeLabel = "MP3 Audio",
+                sampleRateEstimate = "44.1 / 48.0 kHz Stereo",
+                bitrateEstimate = "128 - 320 kbps (CBR / VBR)"
             )
         }
     }

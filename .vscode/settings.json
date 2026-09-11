@@ -1,4 +1,24 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "dotnet.defaultSolution": "VoidPlayer.slnx",
+    "omnisharp.defaultLaunchSolution": "VoidPlayer.slnx",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/desktop-winui/obj/**": true
+    },
+    "files.watcherExclude": {
+        "**/desktop-winui/bin/**": true,
+        "**/desktop-winui/obj/**": true,
+        "**/.gradle/**": true,
+        "**/build/**": true
+    },
+    "chat.tools.terminal.autoApprove": {
+        "dotnet build": true
+    }
 }
