@@ -107,8 +107,8 @@ android {
     
     buildTypes {
         getByName("release") {
-            val releaseSigning = signingConfigs.getByName("release")
-            if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
+            val releaseSigning = signingConfigs.findByName("release")
+            if (releaseSigning?.storeFile != null && releaseSigning.storeFile!!.exists()) {
                 signingConfig = releaseSigning
             }
         }
