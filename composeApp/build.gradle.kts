@@ -107,10 +107,17 @@ android {
     
     buildTypes {
         getByName("release") {
+            vcsInfo.include = false
             val releaseSigning = signingConfigs.findByName("release")
             if (releaseSigning?.storeFile != null && releaseSigning.storeFile!!.exists()) {
                 signingConfig = releaseSigning
             }
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += "META-INF/version-control-info.textproto"
         }
     }
 
