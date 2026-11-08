@@ -106,4 +106,16 @@ class SleepTimerTest {
         assertFalse(finished)
         assertFalse(timer.isActive.value)
     }
+
+    @Test
+    fun testCleanUpCancelsAndCleansChildren() {
+        val timer = timerOn(RecordingDispatcher())
+        timer.startEndOfSongTimer()
+        assertTrue(timer.isActive.value)
+
+        timer.cleanUp()
+        assertFalse(timer.isActive.value)
+        assertFalse(timer.stopAtEndOfSong)
+        assertEquals(0L, timer.remainingSeconds.value)
+    }
 }

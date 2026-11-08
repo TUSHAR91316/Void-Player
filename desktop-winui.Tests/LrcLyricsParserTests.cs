@@ -6,6 +6,18 @@ namespace VoidPlayer.WinUI.Tests;
 public sealed class LrcLyricsParserTests
 {
     [Fact]
+    public void HandlesNullOrEmptyText()
+    {
+        LrcLyricsParser.Parse(null!, out var timed1, out var plain1);
+        Assert.Empty(timed1);
+        Assert.Equal("", plain1);
+
+        LrcLyricsParser.Parse("   \n\r\n  ", out var timed2, out var plain2);
+        Assert.Empty(timed2);
+        Assert.Equal("", plain2);
+    }
+
+    [Fact]
     public void ParsesShortLongAndFractionalTimestamps()
     {
         LrcLyricsParser.Parse("[1:23.4]First\n[123:00]Late\n[00:01.250]Opening", out var timed, out _);

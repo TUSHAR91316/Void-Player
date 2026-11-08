@@ -17,6 +17,31 @@ public sealed class M3uPlaylistCodecTests
     }
 
     [Fact]
+    public void HandlesNullTextAndNegativeSecondsGracefully()
+    {
+        Assert.Empty(M3uPlaylistCodec.Parse(null!));
+        Assert.Empty(M3uPlaylistCodec.Parse("   \r\n\r\n  "));
+
+        var parsedNegative = M3uPlaylistCodec.Parse("#EXTINF:-10,Negative Time\r\npath/to/song.mp3");
+        Assert.Single(parsedNegative);
+        Assert.Null(parsedNegative[0].DurationSeconds);
+        Assert.Equal("Negative Time", parsedNegative[0].Title);
+    }
+
+    [Fact]
+    public void EncodesNullFieldsSafely()
+    {
+        var entries = new[]
+        {
+            new M3uEntry(null!, null!, -5),
+            new M3uEntry("valid/path.mp3", "Valid Song", 100)
+        };
+        var encoded = M3uPlaylistCodec.Encode(entries);
+        Assert.Contains("#EXTINF:-1,", encoded);
+        Assert.Contains("valid/path.mp3", encoded);
+    }
+
+    [Fact]
     public void EncodesRoundTripOrderAndSafeTitles()
     {
         var entries = new[]

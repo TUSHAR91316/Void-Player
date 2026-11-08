@@ -11,6 +11,7 @@ desktop-winui/bin/
 desktop-winui/obj/
 [Bb]in/
 [Oo]bj/
+[Tt]est[Rr]esults/
 .vs/
 **/.vs/
 *.user

@@ -35,4 +35,37 @@ class LrcParserTest {
         val lines = LrcParser.parse("[00:01.00][00:20.00]Chorus")
         assertEquals(listOf(LrcLine(1_000, "Chorus"), LrcLine(20_000, "Chorus")), lines)
     }
+
+    @Test
+    fun handlesBlankOrEmptyContent() {
+        assertEquals(emptyList(), LrcParser.parse(""))
+        assertEquals(emptyList(), LrcParser.parse("   \n\r\n  "))
+    }
+
+    @Test
+    fun parsesSingleDigitFractionalMilliseconds() {
+        val lines = LrcParser.parse("[00:02.5]Single digit frac")
+        assertEquals(listOf(LrcLine(2_500, "Single digit frac")), lines)
+    }
+
+    @Test
+    fun getCurrentLineIndexFindsCorrectLineAtPosition() {
+        val lines = listOf(
+            LrcLine(1_000, "Line 1"),
+            LrcLine(5_000, "Line 2"),
+            LrcLine(10_000, "Line 3")
+        )
+        // Before first line
+        assertEquals(-1, LrcParser.getCurrentLineIndex(lines, 500))
+        // Exactly on first line
+        assertEquals(0, LrcParser.getCurrentLineIndex(lines, 1_000))
+        // Between first and second line
+        assertEquals(0, LrcParser.getCurrentLineIndex(lines, 3_000))
+        // On second line
+        assertEquals(1, LrcParser.getCurrentLineIndex(lines, 5_000))
+        // Past last line
+        assertEquals(2, LrcParser.getCurrentLineIndex(lines, 15_000))
+        // Empty lines list
+        assertEquals(-1, LrcParser.getCurrentLineIndex(emptyList(), 1_000))
+    }
 }

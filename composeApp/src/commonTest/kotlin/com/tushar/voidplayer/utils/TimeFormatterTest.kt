@@ -9,6 +9,8 @@ class TimeFormatterTest {
     @Test
     fun testFormatTimeZero() {
         assertEquals("0:00", formatTime(0))
+        assertEquals("0:00", formatTime(-1000))
+        assertEquals("0:00", formatTime(-1))
     }
 
     @Test
