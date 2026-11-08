@@ -55,8 +55,8 @@ class LrcParserTest {
             LrcLine(5_000, "Line 2"),
             LrcLine(10_000, "Line 3")
         )
-        // Before first line
-        assertEquals(-1, LrcParser.getCurrentLineIndex(lines, 500))
+        // Before first line defaults to 0 so the first line is visible
+        assertEquals(0, LrcParser.getCurrentLineIndex(lines, 500))
         // Exactly on first line
         assertEquals(0, LrcParser.getCurrentLineIndex(lines, 1_000))
         // Between first and second line

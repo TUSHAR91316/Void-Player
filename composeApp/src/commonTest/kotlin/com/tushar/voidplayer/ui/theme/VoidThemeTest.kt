@@ -64,4 +64,53 @@ class VoidThemeTest {
         assertTrue(VoidTheme.contrastRatio(p.tertiaryText, p.selected) >= 4.5)
         assertTrue(VoidTheme.contrastRatio(p.onAccent, p.defaultAccent) >= 4.5)
     }
+
+    @Test
+    fun testAllColorTokensAndModernSchemeAccessors() {
+        VoidTheme.mode = VoidThemeMode.Graphite
+        assertEquals(GraphitePalette.elevated, SurfaceElevated)
+        assertEquals(GraphitePalette.variant, SurfaceVariant)
+        assertEquals(GraphitePalette.pane, SurfacePane)
+        assertEquals(GraphitePalette.selected, SurfaceSelected)
+        assertEquals(GraphitePalette.hairline, HairlineColor)
+        assertEquals(GraphitePalette.primaryText, PrimaryText)
+        assertEquals(GraphitePalette.tertiaryText, TertiaryText)
+        assertEquals(GraphitePalette.onAccent, OnAccent)
+        assertEquals(GraphitePalette.favorite, FavoriteColor)
+        assertEquals(HairlineColor, DividerColor)
+
+        val scheme = ModernScheme
+        assertEquals(DefaultAccent, scheme.primary)
+        assertEquals(OnAccent, scheme.onPrimary)
+        assertEquals(SurfaceBackground, scheme.background)
+        assertEquals(SurfaceElevated, scheme.surface)
+        assertEquals(PrimaryText, scheme.onSurface)
+        assertEquals(SurfaceVariant, scheme.surfaceVariant)
+        assertEquals(SecondaryText, scheme.onSurfaceVariant)
+        assertEquals(HairlineColor, scheme.outline)
+
+        VoidTheme.mode = VoidThemeMode.Classic
+        assertEquals(ClassicPalette.elevated, SurfaceElevated)
+        assertEquals(ClassicPalette.variant, SurfaceVariant)
+        assertEquals(ClassicPalette.pane, SurfacePane)
+        assertEquals(ClassicPalette.selected, SurfaceSelected)
+        assertEquals(ClassicPalette.hairline, HairlineColor)
+        assertEquals(ClassicPalette.primaryText, PrimaryText)
+        assertEquals(ClassicPalette.tertiaryText, TertiaryText)
+        assertEquals(ClassicPalette.onAccent, OnAccent)
+        assertEquals(ClassicPalette.favorite, FavoriteColor)
+    }
+
+    @Test
+    fun testEnsureContrastEdgeCases() {
+        // Already high contrast
+        val white = Color.White
+        val black = Color.Black
+        assertEquals(white, VoidTheme.ensureContrast(white, black, 4.5))
+
+        // Same color on same background requires maximum lightening iterations
+        val adjusted = VoidTheme.ensureContrast(black, black, 4.5)
+        assertTrue(adjusted.red > 0f)
+        assertTrue(VoidTheme.contrastRatio(adjusted, black) >= 4.5)
+    }
 }

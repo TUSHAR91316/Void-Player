@@ -103,5 +103,86 @@ class AiEngineTest {
         assertTrue(insights.averageAcousticEnergy > 0f)
         assertTrue(insights.totalHoursMinutes.isNotBlank())
     }
+
+    @Test
+    fun generateInsightsHandlesHourDurationAndDifferentPersonalities() {
+        // Test hour duration formatting (> 1 hour)
+        val longSong = Song(
+            id = 1L,
+            title = "Epic Suite",
+            artist = "Symphony X",
+            duration = 3_720_000L, // 1h 2m
+            uri = "content://1",
+            genre = "Progressive Metal",
+            acousticEnergy = 0.9f
+        )
+        val metalInsights = AiEngine.generateInsights(listOf(longSong))
+        assertEquals("1h 2m", metalInsights.totalHoursMinutes)
+        assertTrue(
+            metalInsights.personalityTitle == "The Heavy Metal Juggernaut" ||
+            metalInsights.personalityTitle == "The Symphonic Explorer" ||
+            metalInsights.personalityTitle == "The High-Drive Dynamo"
+        )
+
+        // Night vibe
+        val nightSong = Song(
+            id = 2L,
+            title = "Sleep Walk",
+            artist = "Nocturne",
+            duration = 180_000L,
+            uri = "content://2",
+            genre = "Lo-Fi Night Chill",
+            acousticEnergy = 0.2f,
+            dominantMood = "Late Night Chill"
+        )
+        val nightInsights = AiEngine.generateInsights(listOf(nightSong))
+        assertEquals("The Midnight Wanderer", nightInsights.personalityTitle)
+        assertEquals("Warm Studio / Ambient", nightInsights.recommendedEq)
+
+        // Focus vibe
+        val focusSong = Song(
+            id = 3L,
+            title = "Deep Study",
+            artist = "Ambient Mind",
+            duration = 180_000L,
+            uri = "content://3",
+            genre = "Acoustic Ambient Study",
+            acousticEnergy = 0.25f,
+            dominantMood = "Focus & Study"
+        )
+        val focusInsights = AiEngine.generateInsights(listOf(focusSong))
+        assertEquals("The Analytical Zen", focusInsights.personalityTitle)
+        assertEquals("Acoustic Clarity", focusInsights.recommendedEq)
+
+        // Romance vibe
+        val romanceSong = Song(
+            id = 4L,
+            title = "Sweet Heart",
+            artist = "Romantic Soul",
+            duration = 180_000L,
+            uri = "content://4",
+            genre = "R&B Soul Ballad",
+            acousticEnergy = 0.45f,
+            dominantMood = "Romantic Soul"
+        )
+        val romanceInsights = AiEngine.generateInsights(listOf(romanceSong))
+        assertEquals("The Soulful Romantic", romanceInsights.personalityTitle)
+        assertEquals("Vocal Pop Boost", romanceInsights.recommendedEq)
+
+        // Euphoric & Pop vibe hits the else branch ("The Eclectic Connoisseur")
+        val popSong = Song(
+            id = 5L,
+            title = "Disco Fever",
+            artist = "Pop Queen",
+            duration = 180_000L,
+            uri = "content://5",
+            genre = "Dance-Pop Disco",
+            acousticEnergy = 0.70f,
+            dominantMood = "Euphoric & Pop"
+        )
+        val popInsights = AiEngine.generateInsights(listOf(popSong))
+        assertEquals("The Eclectic Connoisseur", popInsights.personalityTitle)
+        assertEquals("Dynamic Normalization", popInsights.recommendedEq)
+    }
 }
 

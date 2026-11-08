@@ -127,5 +127,57 @@ class ModelsCoverageTest {
         assertFalse(song1.isSameTrack(song1.copy(uri = "content://different")))
         assertFalse(song1.isSameTrack(null))
     }
+
+    @Test
+    fun testLyricsSearchResultPropertiesAndDataCopy() {
+        val result = com.tushar.voidplayer.data.LyricsSearchResult(
+            id = 12345L,
+            trackName = "Solaris",
+            artistName = "Photay",
+            albumName = "Oneness",
+            durationSeconds = 215,
+            syncedLyrics = "[00:10.00]First line",
+            plainLyrics = "First line"
+        )
+
+        assertEquals(12345L, result.id)
+        assertEquals("Solaris", result.trackName)
+        assertEquals("Photay", result.artistName)
+        assertEquals("Oneness", result.albumName)
+        assertEquals(215, result.durationSeconds)
+        assertEquals("[00:10.00]First line", result.syncedLyrics)
+        assertEquals("First line", result.plainLyrics)
+
+        val modified = result.copy(syncedLyrics = null)
+        assertTrue(modified.syncedLyrics == null)
+        assertNotEquals(result, modified)
+        assertEquals(result, result.copy())
+    }
+
+    @Test
+    fun testUpdateInfoPropertiesAndDataCopy() {
+        val info = com.tushar.voidplayer.utils.UpdateInfo(
+            isUpdateAvailable = true,
+            latestVersion = "2.4.0",
+            currentVersion = "2.3.0",
+            releaseNotes = "Major overhaul",
+            downloadUrl = "https://github.com/TUSHAR91316/Void-Player/releases/download/v2.4.0/VoidPlayer-2.4.0-release.apk",
+            releasePageUrl = "https://github.com/TUSHAR91316/Void-Player/releases/tag/v2.4.0",
+            isFdroidInstall = false
+        )
+
+        assertTrue(info.isUpdateAvailable)
+        assertEquals("2.4.0", info.latestVersion)
+        assertEquals("2.3.0", info.currentVersion)
+        assertEquals("Major overhaul", info.releaseNotes)
+        assertEquals("https://github.com/TUSHAR91316/Void-Player/releases/tag/v2.4.0", info.releasePageUrl)
+        assertFalse(info.isFdroidInstall)
+
+        val fdroidInfo = info.copy(isUpdateAvailable = false, isFdroidInstall = true, downloadUrl = null)
+        assertFalse(fdroidInfo.isUpdateAvailable)
+        assertTrue(fdroidInfo.isFdroidInstall)
+        assertTrue(fdroidInfo.downloadUrl == null)
+        assertEquals(info, info.copy())
+    }
 }
 

@@ -59,5 +59,60 @@ class M3uPlaylistCodecTest {
         assertEquals("Road_Trip.m3u8", M3uPlaylistCodec.exportFileName("Road/Trip.m3u"))
         assertEquals("Playlist.m3u8", M3uPlaylistCodec.exportFileName("  "))
         assertEquals("Vol. 2", M3uPlaylistCodec.playlistNameFromFileName("Vol. 2.M3U8"))
+        assertEquals("My Mix", M3uPlaylistCodec.playlistNameFromFileName("C:\\Playlists\\My Mix.m3u"))
+        assertEquals("Clean.m3u8", M3uPlaylistCodec.exportFileName("...Clean..."))
+        assertEquals("Invalid______.m3u8", M3uPlaylistCodec.exportFileName("Invalid:?*<>|"))
+    }
+
+    @Test
+    fun percentDecodingAndLocationParsingEdgeCases() {
+        // Valid hex percent decoding
+        assertEquals("Song Title.mp3", M3uPlaylistCodec.fileNameOf("/music/Song%20Title.mp3"))
+        // Query parameters and fragment stripped
+        assertEquals("Track.mp3", M3uPlaylistCodec.fileNameOf("/music/Track.mp3?token=abc#section"))
+        // Windows backslash path
+        assertEquals("Track.mp3", M3uPlaylistCodec.fileNameOf("D:\\Audio\\Track.mp3"))
+        // Colon separator (e.g. Android SAF tree uri)
+        assertEquals("Song.mp3", M3uPlaylistCodec.fileNameOf("content://authority/tree:Music/Song.mp3"))
+        // Invalid hex sequences should keep raw characters
+        assertEquals("Track%ZZ.mp3", M3uPlaylistCodec.fileNameOf("/music/Track%ZZ.mp3"))
+        assertEquals("Track%2.mp3", M3uPlaylistCodec.fileNameOf("/music/Track%2.mp3"))
+        assertEquals("Track%", M3uPlaylistCodec.fileNameOf("/music/Track%"))
+    }
+
+    @Test
+    fun encodeCleansNewlinesAndHandlesDurationFormats() {
+        val entries = listOf(
+            M3uEntry("/music/one.mp3", "Multi\r\nLine Title", 45L),
+            M3uEntry("/music/two.flac", "Null Duration", null),
+            M3uEntry("/music/three.wav", "Negative Duration", -5L)
+        )
+        val encoded = M3uPlaylistCodec.encode(entries)
+        val parsed = M3uPlaylistCodec.parse(encoded)
+
+        assertEquals(3, parsed.size)
+        assertEquals("Multi  Line Title", parsed[0].title)
+        assertEquals(45L, parsed[0].durationSeconds)
+        assertEquals("Null Duration", parsed[1].title)
+        assertEquals(null, parsed[1].durationSeconds)
+        assertEquals("Negative Duration", parsed[2].title)
+        assertEquals(0L, parsed[2].durationSeconds)
+    }
+
+    @Test
+    fun resolveMatchesByBaseNameFallback() {
+        val songs = listOf(
+            Song(1, "Moonlight Sonata", "Beethoven", duration = 300_000, uri = "content://media/1"),
+            Song(2, "Ambient Drone", "Unknown", duration = 120_000, uri = "content://media/2")
+        )
+        // Entry has no #EXTINF and different path, but filename base matches song title
+        val entries = listOf(
+            M3uEntry("/storage/external/Moonlight Sonata.mp3"),
+            M3uEntry("/storage/external/.mp3"), // Empty base name
+            M3uEntry("/storage/external/NonExistent.mp3") // No match
+        )
+        val resolved = M3uPlaylistCodec.resolve(entries, songs)
+        assertEquals(1, resolved.size)
+        assertEquals(1L, resolved[0].id)
     }
 }
