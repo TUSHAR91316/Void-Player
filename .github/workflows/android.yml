@@ -29,7 +29,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Assemble release (matching F-Droid gradle: [yes])
+      - name: "Assemble release (matching F-Droid gradle: [yes])"
         run: ./gradlew :composeApp:assembleRelease
       - name: Verify F-Droid package and version
         run: |
