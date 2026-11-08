@@ -16,7 +16,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
       - name: Build and test Android sources
         run: ./gradlew :composeApp:assembleFdroidDebug :composeApp:assembleFullDebug :composeApp:testFdroidDebugUnitTest
 
@@ -30,7 +29,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
       - name: Assemble unsigned F-Droid release
         run: ./gradlew :composeApp:assembleFdroidRelease
       - name: Verify F-Droid package and version
