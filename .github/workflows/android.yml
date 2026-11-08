@@ -17,9 +17,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Build and test Android sources
-        run: ./gradlew :composeApp:assembleFdroidDebug :composeApp:assembleFullDebug :composeApp:testFdroidDebugUnitTest
+        run: ./gradlew :composeApp:assembleDebug :composeApp:testDebugUnitTest
 
-  # Mirrors what the F-Droid build server runs for `gradle: [fdroid]`, so a release that
+  # Mirrors what the F-Droid build server runs for `gradle: [yes]`, so a release that
   # F-Droid cannot build or would reject is caught before a V* tag is pushed.
   fdroid-release:
     runs-on: ubuntu-latest
@@ -29,13 +29,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Assemble unsigned F-Droid release
-        run: ./gradlew :composeApp:assembleFdroidRelease
+      - name: Assemble release (matching F-Droid gradle: [yes])
+        run: ./gradlew :composeApp:assembleRelease
       - name: Verify F-Droid package and version
         run: |
           set -euo pipefail
-          apk=$(ls composeApp/build/outputs/apk/fdroid/release/*.apk)
-          test "$(echo "$apk" | wc -l)" -eq 1 || { echo "Expected exactly one F-Droid APK, found: $apk"; exit 1; }
+          apk=$(ls composeApp/build/outputs/apk/release/*.apk)
+          test "$(echo "$apk" | wc -l)" -eq 1 || { echo "Expected exactly one release APK, found: $apk"; exit 1; }
           aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
           badging=$("$aapt2" dump badging "$apk" | head -1)
           echo "$badging"

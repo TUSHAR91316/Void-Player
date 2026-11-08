@@ -55,31 +55,24 @@ android {
         buildConfig = true
     }
 
+    val appId = (project.findProperty("VOID_APPLICATION_ID") as? String)
+        ?: System.getenv("VOID_APPLICATION_ID")
+        ?: "com.tushar.voidplayer"
+    val distribution = (project.findProperty("VOID_DISTRIBUTION") as? String)
+        ?: System.getenv("VOID_DISTRIBUTION")
+        ?: (if (appId == "com.orbitwork.VoidPlayer") "full" else "fdroid")
+
     defaultConfig {
         // Published package on F-Droid and GitHub Releases. Changing it breaks updates for
         // every installed user: F-Droid rejects a build whose package differs from its app ID.
-        applicationId = "com.tushar.voidplayer"
+        // Google Play builds can be generated locally using -PVOID_APPLICATION_ID=com.orbitwork.VoidPlayer.
+        applicationId = appId
         minSdk = 26
         targetSdk = 36 // Android 16
         versionCode = 7
         versionName = "2.4.0"
-    }
 
-    flavorDimensions += "distribution"
-    productFlavors {
-        // F-Droid builds this flavor (`gradle: [fdroid]` in fdroiddata). Its signed release
-        // APK is also the GitHub Releases asset that F-Droid compares for reproducibility.
-        create("fdroid") {
-            dimension = "distribution"
-            applicationId = "com.tushar.voidplayer"
-            buildConfigField("String", "DISTRIBUTION", "\"fdroid\"")
-        }
-        // Google Play build, published under the Play package name.
-        create("full") {
-            dimension = "distribution"
-            applicationId = "com.orbitwork.VoidPlayer"
-            buildConfigField("String", "DISTRIBUTION", "\"full\"")
-        }
+        buildConfigField("String", "DISTRIBUTION", "\"$distribution\"")
     }
 
     dependenciesInfo {
@@ -153,13 +146,9 @@ android {
             val outputImpl = this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl
             if (outputImpl != null) {
                 val versionName = defaultConfig.versionName
-                // fdroidRelease is named exactly like the asset fdroiddata's `Binaries:` URL
+                // Release output is named exactly like the asset fdroiddata's `Binaries:` URL
                 // expects (V%v/VoidPlayer-%v-release.apk), so it can be uploaded as is.
-                outputImpl.outputFileName = if (variant.flavorName == "fdroid") {
-                    "VoidPlayer-${versionName}-${variant.buildType.name}.apk"
-                } else {
-                    "VoidPlayer-${versionName}-${variant.flavorName}-${variant.buildType.name}.apk"
-                }
+                outputImpl.outputFileName = "VoidPlayer-${versionName}-${variant.buildType.name}.apk"
             }
         }
     }
@@ -176,6 +165,23 @@ android {
     dependencies {
         debugImplementation(compose.uiTooling)
     }
+}
+
+// Convenience task aliases for backward compatibility with previous CI scripts and docs.
+tasks.register("assembleFdroidRelease") {
+    dependsOn("assembleRelease")
+}
+tasks.register("assembleFdroidDebug") {
+    dependsOn("assembleDebug")
+}
+tasks.register("assembleFullRelease") {
+    dependsOn("assembleRelease")
+}
+tasks.register("assembleFullDebug") {
+    dependsOn("assembleDebug")
+}
+tasks.register("testFdroidDebugUnitTest") {
+    dependsOn("testDebugUnitTest")
 }
 
 
