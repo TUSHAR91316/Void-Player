@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using Microsoft.UI.Xaml.Media.Imaging;
+using VoidPlayer.WinUI.Services;
 
 namespace VoidPlayer.WinUI.Models;
 
@@ -11,18 +12,7 @@ public class AlbumItem
     public string? ArtCachePath { get; set; }
     public BitmapImage? ArtCacheImageSource
     {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(ArtCachePath)) return null;
-            try
-            {
-                return System.IO.File.Exists(ArtCachePath) ? new BitmapImage(new Uri(ArtCachePath)) : null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
+        get => ArtworkImageCache.Get(ArtCachePath);
     }
     public uint Year { get; set; }
     public List<SongItem> Songs { get; set; } = [];

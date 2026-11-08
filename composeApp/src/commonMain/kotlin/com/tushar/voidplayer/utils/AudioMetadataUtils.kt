@@ -13,51 +13,39 @@ data class CodecInfo(
 
 object AudioMetadataUtils {
 
-    fun inspectSong(song: Song): CodecInfo {
-        val uri = song.uri.lowercase()
-        val title = song.title.lowercase()
+    private const val CACHE_LIMIT = 256
+    private val cache = object : LinkedHashMap<Long, CodecInfo>(CACHE_LIMIT, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, CodecInfo>?): Boolean = size > CACHE_LIMIT
+    }
 
-        return when {
-            uri.endsWith(".flac") || title.contains("flac") -> CodecInfo(
-                formatName = "FLAC (Free Lossless Audio Codec)",
-                isLossless = true,
-                isHiRes = true,
-                badgeLabel = "Hi-Res FLAC",
-                sampleRateEstimate = "Up to 24-bit / 96.0 kHz Lossless",
-                bitrateEstimate = "Variable Bitrate (VBR Lossless)"
-            )
-            uri.endsWith(".wav") || title.contains("wav") -> CodecInfo(
-                formatName = "WAV (Linear PCM Audio)",
-                isLossless = true,
-                isHiRes = true,
-                badgeLabel = "Hi-Res WAV",
-                sampleRateEstimate = "16/24-bit / 44.1+ kHz PCM",
-                bitrateEstimate = "1411.2+ kbps Uncompressed"
-            )
-            uri.endsWith(".m4a") || uri.endsWith(".aac") -> CodecInfo(
-                formatName = "AAC / M4A (Advanced Audio Coding)",
-                isLossless = false,
-                isHiRes = false,
-                badgeLabel = "AAC HD",
-                sampleRateEstimate = "44.1 / 48.0 kHz Stereo",
-                bitrateEstimate = "128 - 320 kbps VBR"
-            )
-            uri.endsWith(".ogg") || uri.endsWith(".opus") -> CodecInfo(
-                formatName = "OGG / Opus Audio",
-                isLossless = false,
-                isHiRes = false,
-                badgeLabel = "OPUS HD",
-                sampleRateEstimate = "48.0 kHz Dynamic Stereo",
-                bitrateEstimate = "64 - 256 kbps Adaptive"
-            )
-            else -> CodecInfo(
-                formatName = "MPEG-1 Audio Layer III (MP3)",
-                isLossless = false,
-                isHiRes = false,
-                badgeLabel = "MP3 Audio",
-                sampleRateEstimate = "44.1 / 48.0 kHz Stereo",
-                bitrateEstimate = "128 - 320 kbps (CBR / VBR)"
-            )
+    fun inspectSong(song: Song): CodecInfo {
+        synchronized(cache) { cache[song.id]?.let { return it } }
+        val info = inspectPlatformAudioMetadata(song) ?: estimateFromUri(song.uri)
+        synchronized(cache) { cache[song.id] = info }
+        return info
+    }
+
+    private fun estimateFromUri(uri: String): CodecInfo {
+        val extension = uri.substringBefore('?').substringAfterLast('/', "").substringAfterLast('.', "").lowercase()
+        val format = when (extension) {
+            "flac" -> "FLAC"
+            "wav" -> "WAV"
+            "m4a", "aac" -> "AAC"
+            "ogg" -> "OGG"
+            "opus" -> "Opus"
+            "mp3" -> "MP3"
+            else -> "Unknown audio"
         }
+        val lossless = format in setOf("FLAC", "WAV")
+        return CodecInfo(
+            formatName = "$format (estimated)",
+            isLossless = lossless,
+            isHiRes = false,
+            badgeLabel = "$format · Estimated",
+            sampleRateEstimate = "Unavailable (estimated)",
+            bitrateEstimate = "Unavailable (estimated)"
+        )
     }
 }
+
+expect fun inspectPlatformAudioMetadata(song: Song): CodecInfo?

@@ -14,7 +14,7 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <Grid Background="#070C0A">
+    <Grid Background="{StaticResource VoidGroundBrush}">
         <!-- MAIN APP LAYOUT (NAVIGATION + CONTENT + BOTTOM PLAYER BAR) -->
         <Grid>
             <Grid.RowDefinitions>
@@ -22,32 +22,29 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- NAVIGATION VIEW -->
+            <!-- NAVIGATION VIEW: search at the top, library destinations, settings in the footer.
+                 The brand already sits in the title bar, so the pane carries no second logo. -->
             <NavigationView x:Name="NavView"
                             Grid.Row="0"
                             PaneDisplayMode="Left"
                             IsBackButtonVisible="Collapsed"
                             IsSettingsVisible="False"
                             SelectionChanged="OnNavSelectionChanged"
-                            OpenPaneLength="240"
+                            OpenPaneLength="248"
                             CompactPaneLength="56"
                             Header="">
-                <NavigationView.PaneHeader>
-                    <Grid Margin="12,12,12,16">
-                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <Border Width="34" Height="34" CornerRadius="8" Background="#101C16" BorderBrush="#1F362A" BorderThickness="1">
-                                <Image x:Name="NavHeaderLogo" Source="ms-appx:///Assets/Square44x44Logo.png" Stretch="UniformToFill" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Void Player" FontWeight="Bold" FontSize="15" Foreground="#FFFFFF" />
-                                <TextBlock Text="Hi-Fi Experience" FontSize="11" Foreground="#8B9E94" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-                </NavigationView.PaneHeader>
+                <NavigationView.AutoSuggestBox>
+                    <AutoSuggestBox x:Name="LibrarySearchBox"
+                                    PlaceholderText="Search songs, artists, albums"
+                                    QueryIcon="Find"
+                                    AutomationProperties.Name="Search library"
+                                    Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay}"
+                                    TextChanged="OnSearchTextChanged" />
+                </NavigationView.AutoSuggestBox>
 
                 <NavigationView.MenuItems>
-                    <NavigationViewItem Content="All Songs" Tag="Songs">
+                    <NavigationViewItemHeader Content="Library" />
+                    <NavigationViewItem Content="Songs" Tag="Songs">
                         <NavigationViewItem.Icon>
                             <FontIcon Glyph="&#xE8D6;" />
                         </NavigationViewItem.Icon>
@@ -59,7 +56,7 @@
                     </NavigationViewItem>
                     <NavigationViewItem Content="AI Hub" Tag="AIHub">
                         <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE946;" />
+                            <FontIcon Glyph="&#xE945;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
                     <NavigationViewItem Content="Now Playing" Tag="NowPlaying">
@@ -87,7 +84,7 @@
         <!-- DEDICATED NOW PLAYING FULL-SCREEN OVERLAY (Hidden by default to prevent blank overlay) -->
         <Grid x:Name="NowPlayingOverlay"
               Visibility="Collapsed"
-              Background="#070C0A">
+              Background="{StaticResource VoidGroundBrush}">
             <Frame x:Name="NowPlayingFrame" />
         </Grid>
     </Grid>

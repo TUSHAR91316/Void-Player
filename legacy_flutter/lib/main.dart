@@ -33,19 +33,16 @@ void main() async {
 
     // Desktop: Window Management
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      await windowManager.ensureInitialized();
-      WindowOptions windowOptions = const WindowOptions(
-        size: Size(1200, 800),
-        center: true,
-        backgroundColor: Colors.transparent,
-        skipTaskbar: false,
-        titleBarStyle: TitleBarStyle.hidden,
-      );
-      
-      windowManager.waitUntilReadyToShow(windowOptions, () async {
-        await windowManager.show();
-        await windowManager.focus();
-      });
+      // window_manager 0.6+: native API (nativeapi); synchronous, no ensureInitialized.
+      final window = WindowManager.instance.getCurrent();
+      if (window != null) {
+        window.setSize(const Size(1200, 800).toNative(), false);
+        window.backgroundColor = Colors.transparent.toNative();
+        window.titleBarStyle = TitleBarStyle.hidden;
+        window.center();
+        window.show();
+        window.focus();
+      }
     }
 
     // Launch Application

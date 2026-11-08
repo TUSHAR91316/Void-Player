@@ -10,6 +10,41 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+                    <!-- Navigation pane and content area -->
+                    <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#131417" />
+                    <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#131417" />
+                    <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#0F1012" />
+                    <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="#1F2226" />
+
+                    <!-- List rows: neutral hover/selection instead of accent tint -->
+                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#17191C" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#1F2226" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#23262B" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#1A1C20" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1A1C20" />
+
+                    <!-- Text on accent fills -->
+                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#06140D" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#06140D" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#06140D" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#131417" />
+                    <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#131417" />
+                    <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#0F1012" />
+                    <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="#1F2226" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#17191C" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#1F2226" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#23262B" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#1A1C20" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1A1C20" />
+                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#06140D" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#06140D" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#06140D" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
 
             <!-- GLOBAL CONVERTERS -->
             <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
@@ -23,43 +58,141 @@
             <converters:BoolToHeartGlyphConverter x:Key="BoolToHeartGlyphConverter" />
             <converters:BoolToHeartBrushConverter x:Key="BoolToHeartBrushConverter" />
 
-            <!-- VOID PLAYER DARK THEME BRUSHES -->
-            <SolidColorBrush x:Key="VoidBackgroundBrush" Color="#070C0A" />
-            <SolidColorBrush x:Key="VoidSurfaceBrush" Color="#0B130F" />
-            <SolidColorBrush x:Key="VoidCardBrush" Color="#0F1A14" />
-            <SolidColorBrush x:Key="VoidBorderBrush" Color="#1E3327" />
-            <SolidColorBrush x:Key="VoidAccentEmeraldBrush" Color="#00E575" />
-            <SolidColorBrush x:Key="VoidMutedTextBrush" Color="#8B9E94" />
+            <!--
+                GRAPHITE TOKENS (see the "Void Player Windows Redesign" canvas, Graphite tokens board).
+                Neutral surfaces, hairline borders, one accent. No glows or tinted washes.
+                The album-art color (MainViewModel.DynamicAccentBrush) replaces the accent at runtime
+                only where a page binds to it; everything else uses the system accent below.
+            -->
+            <Color x:Key="VoidGroundColor">#0F1012</Color>
+            <Color x:Key="VoidPaneColor">#131417</Color>
+            <Color x:Key="VoidSurfaceColor">#17191C</Color>
+            <Color x:Key="VoidSelectedColor">#1F2226</Color>
+            <Color x:Key="VoidHairlineColor">#2A2D32</Color>
+            <Color x:Key="VoidTextColor">#EDEEF0</Color>
+            <Color x:Key="VoidTextSecondaryColor">#A9AEB5</Color>
+            <Color x:Key="VoidTextTertiaryColor">#868C94</Color>
+            <Color x:Key="VoidAccentColor">#3CCF8E</Color>
+            <Color x:Key="VoidOnAccentColor">#06140D</Color>
+            <Color x:Key="VoidFavoriteColor">#F2637E</Color>
 
-            <!-- SUBTLE BUTTON STYLE -->
-            <Style x:Key="SubtleButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Padding" Value="8,6,8,6" />
-                <Setter Property="CornerRadius" Value="8" />
+            <SolidColorBrush x:Key="VoidGroundBrush" Color="{StaticResource VoidGroundColor}" />
+            <SolidColorBrush x:Key="VoidPaneBrush" Color="{StaticResource VoidPaneColor}" />
+            <SolidColorBrush x:Key="VoidSelectedBrush" Color="{StaticResource VoidSelectedColor}" />
+            <SolidColorBrush x:Key="VoidTextBrush" Color="{StaticResource VoidTextColor}" />
+            <SolidColorBrush x:Key="VoidTextSecondaryBrush" Color="{StaticResource VoidTextSecondaryColor}" />
+            <SolidColorBrush x:Key="VoidOnAccentBrush" Color="{StaticResource VoidOnAccentColor}" />
+            <SolidColorBrush x:Key="VoidFavoriteBrush" Color="{StaticResource VoidFavoriteColor}" />
+            <SolidColorBrush x:Key="VoidAccentBrush" Color="{StaticResource VoidAccentColor}" />
+
+            <!-- Existing keys, kept so current pages restyle without edits -->
+            <SolidColorBrush x:Key="VoidBackgroundBrush" Color="{StaticResource VoidGroundColor}" />
+            <SolidColorBrush x:Key="VoidSurfaceBrush" Color="{StaticResource VoidPaneColor}" />
+            <SolidColorBrush x:Key="VoidCardBrush" Color="{StaticResource VoidSurfaceColor}" />
+            <SolidColorBrush x:Key="VoidBorderBrush" Color="{StaticResource VoidHairlineColor}" />
+            <SolidColorBrush x:Key="VoidAccentEmeraldBrush" Color="{StaticResource VoidAccentColor}" />
+            <SolidColorBrush x:Key="VoidMutedTextBrush" Color="{StaticResource VoidTextTertiaryColor}" />
+
+            <!--
+                System accent override. In the dark theme WinUI fills accent controls (AccentButtonStyle,
+                Slider, ToggleSwitch, the nav selection pill) from SystemAccentColorLight2.
+            -->
+            <Color x:Key="SystemAccentColor">#2FB57A</Color>
+            <Color x:Key="SystemAccentColorLight1">#36C284</Color>
+            <Color x:Key="SystemAccentColorLight2">#3CCF8E</Color>
+            <Color x:Key="SystemAccentColorLight3">#6FDDAB</Color>
+            <Color x:Key="SystemAccentColorDark1">#279B68</Color>
+            <Color x:Key="SystemAccentColorDark2">#1F7F55</Color>
+            <Color x:Key="SystemAccentColorDark3">#176343</Color>
+
+
+            <!-- TYPE RAMP (Segoe UI Variable is the WinUI default font) -->
+            <Style x:Key="VoidPageTitleTextStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Segoe UI Variable Display" />
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="LineHeight" Value="36" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource VoidTextBrush}" />
+            </Style>
+            <Style x:Key="VoidSectionTitleTextStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="LineHeight" Value="28" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource VoidTextBrush}" />
+            </Style>
+            <Style x:Key="VoidCaptionTextStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{StaticResource VoidTextSecondaryBrush}" />
+            </Style>
+            <Style x:Key="VoidLabelTextStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource VoidMutedTextBrush}" />
             </Style>
 
-            <!-- VOID PILL BUTTON STYLES -->
-            <Style x:Key="VoidPillButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#0F1A14" />
-                <Setter Property="Foreground" Value="#E5E7EB" />
-                <Setter Property="BorderBrush" Value="#1E3327" />
+            <!-- BUTTONS -->
+            <!-- No BasedOn: DropDownButton also uses this style and must keep its own template -->
+            <Style x:Key="SubtleButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{StaticResource VoidTextBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="8,6,8,6" />
+                <Setter Property="CornerRadius" Value="6" />
+            </Style>
+
+            <!-- Secondary: hairline outline on the surface color -->
+            <Style x:Key="VoidSecondaryButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{StaticResource VoidCardBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource VoidTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource VoidBorderBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="CornerRadius" Value="16" />
-                <Setter Property="Padding" Value="14,6,14,6" />
-                <Setter Property="FontSize" Value="12" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="14,0,14,0" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="FontSize" Value="13" />
+            </Style>
+
+            <Style x:Key="VoidAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="16,0,16,0" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="FontSize" Value="13" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
 
-            <Style x:Key="VoidActivePillButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#00E575" />
-                <Setter Property="Foreground" Value="#000000" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="CornerRadius" Value="16" />
-                <Setter Property="Padding" Value="14,6,14,6" />
-                <Setter Property="FontSize" Value="12" />
-                <Setter Property="FontWeight" Value="Bold" />
+            <!-- Square icon button, 40 px hit target -->
+            <Style x:Key="VoidIconButtonStyle" TargetType="Button" BasedOn="{StaticResource SubtleButtonStyle}">
+                <Setter Property="Width" Value="40" />
+                <Setter Property="Height" Value="40" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <!-- Segmented control parts: a VoidSegmentHost Border holding segment buttons -->
+            <Style x:Key="VoidSegmentHostStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource VoidCardBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource VoidBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="3" />
+            </Style>
+
+            <!-- Legacy pill styles now render as segments -->
+            <Style x:Key="VoidPillButtonStyle" TargetType="Button" BasedOn="{StaticResource SubtleButtonStyle}">
+                <Setter Property="Foreground" Value="{StaticResource VoidTextSecondaryBrush}" />
+                <Setter Property="Height" Value="30" />
+                <Setter Property="Padding" Value="12,0,12,0" />
+                <Setter Property="FontSize" Value="13" />
+            </Style>
+
+            <Style x:Key="VoidActivePillButtonStyle" TargetType="Button" BasedOn="{StaticResource SubtleButtonStyle}">
+                <Setter Property="Background" Value="{StaticResource VoidBorderBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource VoidTextBrush}" />
+                <Setter Property="Height" Value="30" />
+                <Setter Property="Padding" Value="12,0,12,0" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

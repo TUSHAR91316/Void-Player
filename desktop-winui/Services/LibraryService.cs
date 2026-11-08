@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VoidPlayer.WinUI.Models;
@@ -22,6 +24,8 @@ public partial class LibraryService : ObservableObject
         "VoidPlayer");
 
     private static readonly string LibraryFilePath = Path.Combine(ConfigDir, "library.json");
+    private readonly SemaphoreSlim _scanGate = new(1, 1);
+    private CancellationTokenSource? _saveDebounce;
 
     public ObservableCollection<SongItem> Songs { get; } = [];
     public ObservableCollection<AlbumItem> Albums { get; } = [];
@@ -59,60 +63,143 @@ public partial class LibraryService : ObservableObject
         await ScanAllFoldersAsync();
     }
 
-    public async Task ScanAllFoldersAsync()
+    public async Task<bool> UpdateTagsAsync(string filePath, string title, string artist, string album,
+        uint year, string genre, uint track, uint bpm, string initialKey, byte[]? coverArt = null)
     {
-        if (IsScanning) return;
-        IsScanning = true;
-        ScanStatus = "Scanning music library...";
-
-        var scannedSongs = new List<SongItem>();
-
-        await Task.Run(() =>
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return false;
+        try
         {
-            foreach (var folder in MonitoredFolders)
+            await Task.Run(() =>
             {
-                if (!Directory.Exists(folder)) continue;
-
-                try
-                {
-                    var files = Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories)
-                        .Where(f => SupportedExtensions.Contains(Path.GetExtension(f)));
-
-                    foreach (var file in files)
-                    {
-                        var song = ReadSongMetadata(file);
-                        if (song != null)
-                        {
-                            scannedSongs.Add(song);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error scanning folder {folder}: {ex.Message}");
-                }
-            }
-        });
-
-        // Update collections on UI thread
-        Songs.Clear();
-        foreach (var song in scannedSongs.OrderBy(s => s.Title))
-        {
-            Songs.Add(song);
+                using var audioFile = TagLib.File.Create(filePath);
+                audioFile.Tag.Title = title.Trim();
+                audioFile.Tag.Performers = [artist.Trim()];
+                audioFile.Tag.Album = album.Trim();
+                audioFile.Tag.Year = year;
+                audioFile.Tag.Genres = genre.Split([';', ','], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                audioFile.Tag.Track = track;
+                audioFile.Tag.BeatsPerMinute = bpm;
+                audioFile.Tag.InitialKey = initialKey.Trim();
+                if (coverArt is { Length: > 0 })
+                    audioFile.Tag.Pictures = [new TagLib.Picture(new TagLib.ByteVector(coverArt))];
+                audioFile.Save();
+            });
+            await ScanAllFoldersAsync();
+            return true;
         }
-
-        RebuildAlbumsAndArtists();
-        SaveLibrary();
-
-        IsScanning = false;
-        ScanStatus = $"Library updated: {Songs.Count} songs loaded.";
-        ScanCompleted?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Tag update failed: {ex.Message}");
+            return false;
+        }
     }
 
-    private static SongItem? ReadSongMetadata(string filePath)
+    public async Task<List<SongItem>> ImportAudioFilesAsync(IEnumerable<string> filePaths)
+    {
+        var paths = filePaths.Where(path => File.Exists(path) && SupportedExtensions.Contains(Path.GetExtension(path)))
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var existingByPath = Songs.GroupBy(song => song.FilePath, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var imported = await Task.Run(() => paths.Select(path =>
+        {
+            existingByPath.TryGetValue(path, out var previous);
+            return ReadSongMetadata(path, previous);
+        }).Where(song => song != null).Cast<SongItem>().ToList());
+        foreach (var song in imported)
+        {
+            var existing = Songs.FirstOrDefault(item => string.Equals(item.FilePath, song.FilePath, StringComparison.OrdinalIgnoreCase));
+            if (existing == null) Songs.Add(song);
+            else
+            {
+                int index = Songs.IndexOf(existing);
+                Songs[index] = song;
+            }
+        }
+        if (imported.Count > 0)
+        {
+            RebuildAlbumsAndArtists();
+            SaveLibrary();
+        }
+        return imported;
+    }
+
+    public async Task ScanAllFoldersAsync()
+    {
+        await _scanGate.WaitAsync();
+        IsScanning = true;
+        ScanStatus = "Scanning music library...";
+        try
+        {
+            var folders = MonitoredFolders.ToArray();
+            var previousByPath = Songs
+                .Where(s => !string.IsNullOrWhiteSpace(s.FilePath))
+                .GroupBy(s => s.FilePath, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            var scannedSongs = new List<SongItem>();
+
+            await Task.Run(() =>
+            {
+                foreach (var folder in folders)
+                {
+                    if (!Directory.Exists(folder)) continue;
+
+                    try
+                    {
+                        var options = new EnumerationOptions
+                        {
+                            RecurseSubdirectories = true,
+                            IgnoreInaccessible = true,
+                            ReturnSpecialDirectories = false,
+                            AttributesToSkip = FileAttributes.ReparsePoint
+                        };
+                        var files = Directory.EnumerateFiles(folder, "*.*", options)
+                            .Where(f => SupportedExtensions.Contains(Path.GetExtension(f)));
+
+                        foreach (var file in files)
+                        {
+                            previousByPath.TryGetValue(file, out var previous);
+                            var song = ReadSongMetadata(file, previous);
+                            if (song != null) scannedSongs.Add(song);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error scanning folder {folder}: {ex.Message}");
+                    }
+                }
+            });
+
+            // Keep favorites, ids and date added for files that were already in the library
+            LibraryMerge.CarryOverUserState(Songs, scannedSongs);
+
+            // Update collections on UI thread
+            Songs.Clear();
+            foreach (var song in scannedSongs.OrderBy(s => s.Title))
+            {
+                Songs.Add(song);
+            }
+
+            RebuildAlbumsAndArtists();
+            SaveLibrary();
+            ScanStatus = $"Library updated: {Songs.Count} songs loaded.";
+            ScanCompleted?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            IsScanning = false;
+            _scanGate.Release();
+        }
+    }
+
+    private static SongItem? ReadSongMetadata(string filePath, SongItem? previous = null)
     {
         try
         {
+            var fileInfo = new FileInfo(filePath);
+            if (previous != null && previous.FileSizeBytes == fileInfo.Length &&
+                previous.LastWriteTimeUtcTicks == fileInfo.LastWriteTimeUtc.Ticks)
+                return previous;
+
             using var tagFile = TagLib.File.Create(filePath);
             var tag = tagFile.Tag;
             var props = tagFile.Properties;
@@ -169,7 +256,10 @@ public partial class LibraryService : ObservableObject
                 TrackNumber = tag.Track,
                 Genre = genre,
                 Bpm = bpm,
-                CodecInfo = codecInfo
+                InitialKey = tag.InitialKey ?? string.Empty,
+                CodecInfo = codecInfo,
+                LastWriteTimeUtcTicks = fileInfo.LastWriteTimeUtc.Ticks,
+                FileSizeBytes = fileInfo.Length
             };
         }
         catch
@@ -186,6 +276,8 @@ public partial class LibraryService : ObservableObject
                     Album = "Unknown Album",
                     Duration = TimeSpan.Zero,
                     FilePath = filePath,
+                    LastWriteTimeUtcTicks = fi.LastWriteTimeUtc.Ticks,
+                    FileSizeBytes = fi.Length,
                     CodecInfo = new AudioCodecInfo
                     {
                         FormatName = ext,
@@ -250,10 +342,34 @@ public partial class LibraryService : ObservableObject
                 Songs = [.. Songs]
             };
 
-            string json = JsonSerializer.Serialize(data, VoidJsonContext.Default.LibrarySaveData);
-            File.WriteAllText(LibraryFilePath, json);
+            _saveDebounce?.Cancel();
+            _saveDebounce?.Dispose();
+            _saveDebounce = new CancellationTokenSource();
+            _ = SaveLibraryDebouncedAsync(data, _saveDebounce.Token);
         }
         catch { }
+    }
+
+    private static async Task SaveLibraryDebouncedAsync(LibrarySaveData snapshot, CancellationToken cancellationToken)
+    {
+        string tempPath = LibraryFilePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            await Task.Delay(250, cancellationToken);
+            string json = await Task.Run(() => JsonSerializer.Serialize(snapshot, VoidJsonContext.Default.LibrarySaveData), cancellationToken);
+            await File.WriteAllTextAsync(tempPath, json, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            File.Move(tempPath, LibraryFilePath, overwrite: true);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to save library: {ex.Message}");
+        }
+        finally
+        {
+            try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+        }
     }
 
     private void LoadSavedLibrary()

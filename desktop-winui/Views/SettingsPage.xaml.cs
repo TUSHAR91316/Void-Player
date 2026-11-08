@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -40,6 +41,7 @@ public sealed partial class SettingsPage : Page, INotifyPropertyChanged
             ApplySleepButtonState(ViewModel.IsSleepTimerActive ? ViewModel.SleepTimerMinutesRemaining : 0);
             ApplyEqualizerSliders(ViewModel.Player.EqualizerBands);
             ApplyEqualizerPresetButtonState(ViewModel.Player.EqualizerPreset);
+            RefreshCustomEqPresetButtons();
         }
     }
 
@@ -242,5 +244,115 @@ public sealed partial class SettingsPage : Page, INotifyPropertyChanged
     private void OnRefreshStatsClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.UpdateMemoryStats();
+    }
+
+    private async void OnSaveCustomEqPresetClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        string? name = await PromptTextAsync("Save equalizer preset", "Preset name");
+        if (name == null) return;
+        ViewModel.Player.SaveCustomEqPreset(name);
+        ViewModel.SaveSettings();
+        RefreshCustomEqPresetButtons();
+    }
+
+    private async void OnImportEqPresetsClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        string? json = await PromptTextAsync("Import equalizer presets", "Paste preset JSON");
+        if (json == null || !ViewModel.Player.ImportCustomEqPresets(json)) return;
+        ViewModel.SaveSettings();
+        RefreshCustomEqPresetButtons();
+    }
+
+    private async void OnExportEqPresetsClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        await ShowTextAsync("Export equalizer presets", ViewModel.Player.ExportCustomEqPresets());
+    }
+
+    private async System.Threading.Tasks.Task<string?> PromptTextAsync(string title, string placeholder)
+    {
+        var input = new TextBox { PlaceholderText = placeholder };
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = input,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            XamlRoot = XamlRoot
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary ? input.Text.Trim() : null;
+    }
+
+    private async System.Threading.Tasks.Task ShowTextAsync(string title, string value)
+    {
+        var input = new TextBox { Text = value, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, IsReadOnly = true, MinHeight = 160 };
+        var dialog = new ContentDialog { Title = title, Content = input, CloseButtonText = "Close", XamlRoot = XamlRoot };
+        await dialog.ShowAsync();
+    }
+
+    private void RefreshCustomEqPresetButtons()
+    {
+        if (ViewModel == null || CustomEqPresetsPanel == null) return;
+        CustomEqPresetsPanel.Children.Clear();
+        foreach (var preset in ViewModel.Player.CustomEqPresets.Keys.ToArray())
+        {
+            var apply = new Button { Content = preset, Tag = preset, Padding = new Thickness(12, 5, 12, 5) };
+            apply.Click += (_, _) =>
+            {
+                ViewModel.Player.ApplyCustomEqPreset(preset);
+                ApplyEqualizerSliders(ViewModel.Player.EqualizerBands);
+                ViewModel.SaveSettings();
+            };
+            var flyout = new MenuFlyout();
+            var rename = new MenuFlyoutItem { Text = "Rename" };
+            rename.Click += async (_, _) =>
+            {
+                string? name = await PromptTextAsync("Rename equalizer preset", preset);
+                if (name == null) return;
+                ViewModel.Player.RenameCustomEqPreset(preset, name);
+                ViewModel.SaveSettings();
+                RefreshCustomEqPresetButtons();
+            };
+            var delete = new MenuFlyoutItem { Text = "Delete" };
+            delete.Click += (_, _) =>
+            {
+                ViewModel.Player.DeleteCustomEqPreset(preset);
+                ViewModel.SaveSettings();
+                RefreshCustomEqPresetButtons();
+            };
+            flyout.Items.Add(rename);
+            flyout.Items.Add(delete);
+            apply.ContextFlyout = flyout;
+            CustomEqPresetsPanel.Children.Add(apply);
+        }
+    }
+
+    private static string ReadLocalCrashLog()
+    {
+        string path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VoidPlayer", "logs", "crash.log");
+        return System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : "No crash log has been recorded.";
+    }
+
+    private async void OnViewCrashLogClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "Local crash log",
+            Content = new ScrollViewer { Content = new TextBlock { Text = ReadLocalCrashLog(), TextWrapping = TextWrapping.Wrap }, MaxHeight = 500 },
+            CloseButtonText = "Close",
+            XamlRoot = XamlRoot
+        };
+        await dialog.ShowAsync();
+    }
+
+    private async void OnCopyCrashLogClick(object sender, RoutedEventArgs e)
+    {
+        var data = new Windows.ApplicationModel.DataTransfer.DataPackage();
+        data.SetText(ReadLocalCrashLog());
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(data);
+        var dialog = new ContentDialog { Title = "Crash log copied", Content = "The local log is on the clipboard. Nothing was sent.", CloseButtonText = "OK", XamlRoot = XamlRoot };
+        await dialog.ShowAsync();
     }
 }

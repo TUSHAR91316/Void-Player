@@ -156,6 +156,17 @@
                                       OffContent="Off"
                                       VerticalAlignment="Center"/>
                     </Grid>
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Online lyrics (LRCLIB)" FontSize="13" FontWeight="Medium"/>
+                            <TextBlock Text="Off by default. When enabled, song title and artist are sent to LRCLIB when local lyrics are missing." FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.OnlineLyricsEnabled, Mode=TwoWay}" OnContent="On" OffContent="Off" VerticalAlignment="Center"/>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -292,7 +303,7 @@
                                     Spacing="8">
                             <FontIcon Glyph="&#xE73E;"
                                       FontSize="13"
-                                      Foreground="#00E676"/>
+                                      Foreground="#3CCF8E"/>
                             <TextBlock Text="Workstation GC mode active (aggressive compact client heap)"
                                        FontSize="13"/>
                         </StackPanel>
@@ -300,7 +311,7 @@
                                     Spacing="8">
                             <FontIcon Glyph="&#xE73E;"
                                       FontSize="13"
-                                      Foreground="#00E676"/>
+                                      Foreground="#3CCF8E"/>
                             <TextBlock Text="{x:Bind ViewModel.Player.AudioPipelineStatus, Mode=OneWay}"
                                        FontSize="13"/>
                         </StackPanel>
@@ -308,7 +319,7 @@
                                     Spacing="8">
                             <FontIcon Glyph="&#xE73E;"
                                       FontSize="13"
-                                      Foreground="#00E676"/>
+                                      Foreground="#3CCF8E"/>
                             <TextBlock Text="UI virtualization active (only visible items allocated in memory)"
                                        FontSize="13"/>
                         </StackPanel>
@@ -316,7 +327,7 @@
                                     Spacing="8">
                             <FontIcon Glyph="&#xE73E;"
                                       FontSize="13"
-                                      Foreground="#00E676"/>
+                                      Foreground="#3CCF8E"/>
                             <TextBlock Text="Sub-millisecond 32x32 dynamic palette extractor with caching"
                                        FontSize="13"/>
                         </StackPanel>
@@ -418,6 +429,13 @@
                                 Padding="12,5,12,5"
                                 FontSize="12"/>
                     </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Save as preset" Click="OnSaveCustomEqPresetClick"/>
+                        <Button Content="Import JSON" Click="OnImportEqPresetsClick"/>
+                        <Button Content="Export JSON" Click="OnExportEqPresetsClick"/>
+                    </StackPanel>
+                    <StackPanel x:Name="CustomEqPresetsPanel" Orientation="Horizontal" Spacing="8"/>
 
                     <!-- 5-Band Slider Mockup -->
                     <Grid ColumnSpacing="20"
@@ -532,22 +550,26 @@
                         <TextBlock Text="About Void Player"
                                    FontSize="16"
                                    FontWeight="SemiBold"/>
-                        <Border Background="#132B1F"
+                        <Border Background="#1F2226"
                                 CornerRadius="4"
                                 Padding="6,2,6,2"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="v2.3"
+                            <TextBlock Text="{x:Bind ViewModel.AppVersion, Mode=OneWay}"
                                        FontSize="10"
                                        FontWeight="Bold"
-                                       Foreground="#00E575"/>
+                                       Foreground="#3CCF8E"/>
                         </Border>
                     </StackPanel>
-                    <TextBlock Text="Version 2.3.0 (WinUI 3 Native Desktop)"
+                    <TextBlock Text="{x:Bind ViewModel.AppVersion, Mode=OneWay}"
                                FontSize="13"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock Text="Publisher: Byte-Labs • Designed for Windows 11 &amp; Microsoft Store"
                                FontSize="13"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="View local crash log" Click="OnViewCrashLogClick"/>
+                        <Button Content="Copy crash log" Click="OnCopyCrashLogClick"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

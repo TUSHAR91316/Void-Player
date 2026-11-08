@@ -4,12 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Threading;
 using Windows.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using VoidPlayer.WinUI.Models;
+using VoidPlayer.WinUI.Services;
 using VoidPlayer.WinUI.ViewModels;
 
 namespace VoidPlayer.WinUI.Views;
@@ -47,8 +49,8 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
         : "\uEB51"; // Heart Outline
 
     public Brush FavoriteBrush => (ViewModel?.Player.CurrentSong?.IsFavorite == true)
-        ? (ViewModel.DynamicAccentBrush)
-        : (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
+        ? (Brush)Application.Current.Resources["VoidFavoriteBrush"]
+        : (Brush)Application.Current.Resources["VoidTextSecondaryBrush"];
 
     public string SelectedTab { get; set; } = "Cover";
 
@@ -57,17 +59,21 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
     public Visibility QueueVisibility => SelectedTab == "Queue" ? Visibility.Visible : Visibility.Collapsed;
     public Visibility SpecsVisibility => SelectedTab == "Specs" ? Visibility.Visible : Visibility.Collapsed;
 
-    public Brush CoverPillBg => SelectedTab == "Cover" ? (ViewModel?.DynamicAccentBrush ?? new SolidColorBrush(Color.FromArgb(255, 0, 230, 118))) : new SolidColorBrush(Color.FromArgb(25, 255, 255, 255));
-    public Brush CoverPillFg => SelectedTab == "Cover" ? new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)) : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
+    // Tabs render as a segmented control: the selected tab gets the hairline thumb and primary
+    // text, the others stay flat with secondary text. No accent fill, so any album color works.
+    private static Brush TabRes(string key) => (Brush)Application.Current.Resources[key];
+    private static readonly Brush FlatTabBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+    private Brush TabBg(string tab) => SelectedTab == tab ? TabRes("VoidBorderBrush") : FlatTabBrush;
+    private Brush TabFg(string tab) => SelectedTab == tab ? TabRes("VoidTextBrush") : TabRes("VoidTextSecondaryBrush");
 
-    public Brush LyricsPillBg => SelectedTab == "Lyrics" ? (ViewModel?.DynamicAccentBrush ?? new SolidColorBrush(Color.FromArgb(255, 0, 230, 118))) : new SolidColorBrush(Color.FromArgb(25, 255, 255, 255));
-    public Brush LyricsPillFg => SelectedTab == "Lyrics" ? new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)) : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
-
-    public Brush QueuePillBg => SelectedTab == "Queue" ? (ViewModel?.DynamicAccentBrush ?? new SolidColorBrush(Color.FromArgb(255, 0, 230, 118))) : new SolidColorBrush(Color.FromArgb(25, 255, 255, 255));
-    public Brush QueuePillFg => SelectedTab == "Queue" ? new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)) : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
-
-    public Brush SpecsPillBg => SelectedTab == "Specs" ? (ViewModel?.DynamicAccentBrush ?? new SolidColorBrush(Color.FromArgb(255, 0, 230, 118))) : new SolidColorBrush(Color.FromArgb(25, 255, 255, 255));
-    public Brush SpecsPillFg => SelectedTab == "Specs" ? new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)) : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
+    public Brush CoverPillBg => TabBg("Cover");
+    public Brush CoverPillFg => TabFg("Cover");
+    public Brush LyricsPillBg => TabBg("Lyrics");
+    public Brush LyricsPillFg => TabFg("Lyrics");
+    public Brush QueuePillBg => TabBg("Queue");
+    public Brush QueuePillFg => TabFg("Queue");
+    public Brush SpecsPillBg => TabBg("Specs");
+    public Brush SpecsPillFg => TabFg("Specs");
 
     public string QueueCountText => ViewModel != null ? $"{ViewModel.Player.Queue.Count} tracks" : "0 tracks";
 
@@ -76,6 +82,9 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
     public string LyricsStatusText { get; private set; } = "No local lyrics";
 
     private int _lyricsRequestId;
+    private CancellationTokenSource? _lyricsCancellation;
+    private List<(TimeSpan Time, string Text)> _timedLyrics = [];
+    private string _plainLyrics = string.Empty;
 
     public NowPlayingPage()
     {
@@ -101,6 +110,9 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
         base.OnNavigatedFrom(e);
         if (ViewModel != null)
         {
+            _lyricsCancellation?.Cancel();
+            _lyricsCancellation?.Dispose();
+            _lyricsCancellation = null;
             ViewModel.Player.PropertyChanged -= OnPlayerPropertyChanged;
             ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         }
@@ -122,6 +134,7 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentSeconds)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentPositionText)));
+            UpdateCurrentLyric();
         }
         else if (e.PropertyName == nameof(ViewModel.Player.TotalDuration))
         {
@@ -146,9 +159,15 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
 
     private async Task LoadLyricsAsync(SongItem? song)
     {
+        _lyricsCancellation?.Cancel();
+        _lyricsCancellation?.Dispose();
+        _lyricsCancellation = new CancellationTokenSource();
+        var cancellationToken = _lyricsCancellation.Token;
         int requestId = ++_lyricsRequestId;
         string lyrics = "No lyrics found for this song.";
         string status = "No local lyrics";
+        _timedLyrics = [];
+        _plainLyrics = lyrics;
 
         if (song != null && !string.IsNullOrWhiteSpace(song.FilePath))
         {
@@ -158,16 +177,18 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
                 if (File.Exists(lrcPath))
                 {
                     string rawLyrics = await File.ReadAllTextAsync(lrcPath);
-                    string[] lines = rawLyrics
-                        .Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries)
-                        .Select(line => Regex.Replace(line, @"\[\d{1,2}:\d{2}(?:[.:]\d{1,3})?\]", string.Empty).Trim())
-                        .Where(line => !string.IsNullOrWhiteSpace(line))
-                        .ToArray();
-
-                    if (lines.Length > 0)
+                    ParseLyrics(rawLyrics, out var timed, out var plain);
+                    _timedLyrics = timed;
+                    _plainLyrics = plain;
+                    if (_timedLyrics.Count > 0)
                     {
-                        lyrics = string.Join(Environment.NewLine + Environment.NewLine, lines);
-                        status = "Local .lrc lyrics";
+                        lyrics = _timedLyrics[0].Text;
+                        status = "Synced local .lrc lyrics";
+                    }
+                    else if (!string.IsNullOrWhiteSpace(plain))
+                    {
+                        lyrics = plain;
+                        status = "Local lyrics";
                     }
                 }
             }
@@ -177,11 +198,49 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
             }
         }
 
-        if (requestId != _lyricsRequestId) return;
+        if (_timedLyrics.Count == 0 && _plainLyrics == "No lyrics found for this song." &&
+            song != null && ViewModel?.OnlineLyricsEnabled == true)
+        {
+            try
+            {
+                var result = await VoidPlayer.WinUI.Services.LyricsService.FetchAsync(song, cancellationToken);
+                if (result != null)
+                {
+                    _plainLyrics = result.Text;
+                    if (result.IsSynced) ParseLyrics(result.Text, out _timedLyrics, out _plainLyrics);
+                    lyrics = result.IsSynced && _timedLyrics.Count > 0 ? _timedLyrics[0].Text : result.Text;
+                    status = result.IsSynced ? "Synced LRCLIB lyrics" : "LRCLIB lyrics";
+                }
+                else status = "No LRCLIB match";
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"LRCLIB request failed: {ex.Message}"); status = "LRCLIB unavailable"; }
+        }
+        else if (_timedLyrics.Count == 0 && ViewModel?.OnlineLyricsEnabled != true)
+        {
+            status = "Enable online lyrics in Settings";
+        }
+
+        if (requestId != _lyricsRequestId || cancellationToken.IsCancellationRequested) return;
         LyricsText = lyrics;
         LyricsStatusText = status;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LyricsText)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LyricsStatusText)));
+        UpdateCurrentLyric();
+    }
+
+    private static void ParseLyrics(string raw, out List<(TimeSpan Time, string Text)> timed, out string plain)
+        => VoidPlayer.WinUI.Services.LrcLyricsParser.Parse(raw, out timed, out plain);
+
+    private void UpdateCurrentLyric()
+    {
+        if (_timedLyrics.Count == 0) return;
+        TimeSpan position = ViewModel?.Player.CurrentPosition ?? TimeSpan.Zero;
+        string? current = _timedLyrics.LastOrDefault(item => item.Time <= position).Text;
+        string value = current ?? _timedLyrics[0].Text;
+        if (LyricsText == value) return;
+        LyricsText = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LyricsText)));
     }
 
     private void OnFavoriteClick(object sender, RoutedEventArgs e)
@@ -283,6 +342,83 @@ public sealed partial class NowPlayingPage : Page, INotifyPropertyChanged
         {
             ViewModel.Player.RemoveFromQueue(song);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(QueueCountText)));
+        }
+    }
+
+    private async void OnImportM3uClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.MusicLibrary;
+            picker.FileTypeFilter.Add(".m3u");
+            picker.FileTypeFilter.Add(".m3u8");
+            if (App.CurrentWindow != null)
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+            }
+            var file = await picker.PickSingleFileAsync();
+            if (file == null) return;
+            string contents = await Windows.Storage.FileIO.ReadTextAsync(file);
+            var entries = M3uPlaylistCodec.Parse(contents);
+            var songs = ViewModel.Library.Songs.ToList();
+            var resolved = entries.Select(entry =>
+            {
+                string location = entry.Location;
+                if (Uri.TryCreate(location, UriKind.Absolute, out var uri) && uri.IsFile) location = uri.LocalPath;
+                else if (!Path.IsPathRooted(location)) location = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file.Path)!, location));
+                return songs.FirstOrDefault(song => string.Equals(Path.GetFullPath(song.FilePath), location, StringComparison.OrdinalIgnoreCase))
+                    ?? songs.FirstOrDefault(song => string.Equals(Path.GetFileName(song.FilePath), Path.GetFileName(location), StringComparison.OrdinalIgnoreCase));
+            }).Where(song => song != null).Cast<SongItem>().ToList();
+            if (resolved.Count > 0)
+            {
+                ViewModel.Player.SetQueue(resolved, resolved[0]);
+                ViewModel.Player.PlayCurrentIndex();
+            }
+            var dialog = new ContentDialog
+            {
+                Title = "M3U playlist imported",
+                Content = $"Added {resolved.Count} of {entries.Count} tracks to the queue.",
+                CloseButtonText = "Close",
+                XamlRoot = XamlRoot
+            };
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            var dialog = new ContentDialog { Title = "Could not import playlist", Content = ex.Message, CloseButtonText = "Close", XamlRoot = XamlRoot };
+            await dialog.ShowAsync();
+        }
+    }
+
+    private async void OnExportM3uClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null || ViewModel.Player.Queue.Count == 0) return;
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FileSavePicker
+            {
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.MusicLibrary,
+                SuggestedFileName = "VoidPlayer Queue"
+            };
+            picker.FileTypeChoices.Add("M3U8 playlist", new System.Collections.Generic.List<string> { ".m3u8" });
+            if (App.CurrentWindow != null)
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.CurrentWindow);
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+            }
+            var file = await picker.PickSaveFileAsync();
+            if (file == null) return;
+            var entries = ViewModel.Player.Queue.Select(song => new M3uEntry(song.FilePath, song.Title,
+                song.Duration > TimeSpan.Zero ? (long)song.Duration.TotalSeconds : null));
+            await Windows.Storage.FileIO.WriteTextAsync(file, M3uPlaylistCodec.Encode(entries));
+        }
+        catch (Exception ex)
+        {
+            var dialog = new ContentDialog { Title = "Could not export playlist", Content = ex.Message, CloseButtonText = "Close", XamlRoot = XamlRoot };
+            await dialog.ShowAsync();
         }
     }
 

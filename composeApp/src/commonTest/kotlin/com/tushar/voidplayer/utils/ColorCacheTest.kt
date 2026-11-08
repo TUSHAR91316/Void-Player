@@ -1,4 +1,4 @@
-﻿package com.tushar.voidplayer.utils
+package com.tushar.voidplayer.utils
 
 import androidx.compose.ui.graphics.Color
 import kotlin.test.Test

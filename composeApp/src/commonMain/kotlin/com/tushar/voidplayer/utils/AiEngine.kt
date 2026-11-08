@@ -5,6 +5,7 @@ import com.tushar.voidplayer.model.AiCategory
 import com.tushar.voidplayer.model.Song
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.random.Random
 
 data class AiInsightsData(
     val dominantVibe: String,
@@ -74,23 +75,7 @@ object AiEngine {
      * Higher score = smoother, more harmonious continuous transition.
      */
     fun computeFlowScore(a: Song, b: Song): Float {
-        // 1. Mood continuity
-        val moodScore = if (a.dominantMood.isNotBlank() && b.dominantMood.isNotBlank() &&
-            a.dominantMood.equals(b.dominantMood, ignoreCase = true)
-        ) 1.0f else 0.5f
-
-        // 2. Energy flow continuity (avoids violent acoustic energy spikes)
-        val energyDelta = abs(a.acousticEnergy - b.acousticEnergy)
-        val energyScore = max(0.0f, 1.0f - (energyDelta * 1.5f))
-
-        // 3. Tempo compatibility
-        var tempoScore = 0.7f
-        if (a.bpm > 0 && b.bpm > 0) {
-            val bpmDelta = abs(a.bpm - b.bpm).toFloat()
-            tempoScore = max(0.0f, 1.0f - (bpmDelta / 60.0f))
-        }
-
-        return (moodScore * 0.45f) + (energyScore * 0.35f) + (tempoScore * 0.20f)
+        return SmlV2.flowScore(a, b, a.musicalKey, b.musicalKey).toFloat()
     }
 
     /**
@@ -101,25 +86,26 @@ object AiEngine {
         if (pool.size <= 1) return pool
 
         val result = mutableListOf<Song>()
-        val current = startingSong ?: pool.first()
+        // Match by track identity: startingSong may be a copy with different metadata.
+        val startIdx = startingSong?.let { s -> pool.indexOfFirst { it.isSameTrack(s) } } ?: -1
+        val current = if (startIdx >= 0) pool.removeAt(startIdx) else pool.removeAt(0)
         result.add(current)
-        pool.remove(current)
 
         var lastSong = current
         while (pool.isNotEmpty()) {
-            var bestNext = pool.first()
+            var bestIdx = 0
             var bestScore = -1.0f
 
-            for (candidate in pool) {
-                val score = computeFlowScore(lastSong, candidate)
+            for (i in pool.indices) {
+                val score = computeFlowScore(lastSong, pool[i])
                 if (score > bestScore) {
                     bestScore = score
-                    bestNext = candidate
+                    bestIdx = i
                 }
             }
 
+            val bestNext = pool.removeAt(bestIdx)
             result.add(bestNext)
-            pool.remove(bestNext)
             lastSong = bestNext
         }
 
@@ -245,26 +231,42 @@ object AiEngine {
      * AI DJ Smart Flow: Intelligently calculates the next most harmonious track
      * using SML harmonic transition scoring.
      */
-    fun getAiDjNextSong(currentSong: Song, allSongs: List<Song>, queue: List<Song>): Song? {
-        if (allSongs.size <= 2) return null
-        val candidates = allSongs.filter { it.id != currentSong.id }
+    fun getAiDjNextSong(
+        currentSong: Song,
+        allSongs: List<Song>,
+        recentlyPlayedIds: Collection<Long> = emptyList(),
+        random: Random = Random.Default,
+        localHour: Int = 12,
+        listeningBiases: Map<Long, Double> = emptyMap()
+    ): Song? {
+        val candidates = allSongs.filter { !it.isSameTrack(currentSong) }
         if (candidates.isEmpty()) return null
 
         // Exclude songs already played in recent history if alternatives exist
-        val recentIds = queue.takeLast(minOf(5, allSongs.size - 2)).map { it.id }.toSet()
-        val eligibleCandidates = candidates.filter { it.id !in recentIds }.ifEmpty { candidates }
+        val freshIds = SmlV2.filterRadioCandidateIds(
+            candidates.map { it.id.toString() },
+            recentlyPlayedIds.map(Long::toString)
+        ).toSet()
+        val unplayed = candidates.filter { it.id.toString() in freshIds }
+        // No tempo jump over SmlV2.MAX_RADIO_BPM_JUMP when both songs carry a BPM tag.
+        val eligibleCandidates = SmlV2.filterTempoJumps(currentSong.bpm, unplayed) { it.bpm }
 
-        // Compute SML harmonic flow score for each eligible candidate
+        // Library songs carry no mood until classified, which would flatten the mood term.
+        val current = withResolvedMood(currentSong)
         val scored = eligibleCandidates.map { candidate ->
-            val flowScore = computeFlowScore(currentSong, candidate)
-            candidate to flowScore
+            candidate to SmlV2.radioScore(
+                SmlV2.flowScore(current, withResolvedMood(candidate)), candidate, localHour,
+                learnedBias = listeningBiases[candidate.id] ?: 0.0
+            )
         }
 
-        val bestMatches = scored.sortedByDescending { it.second }
-        // Pick among top 3 matches with slight randomization for freshness
-        val topPicks = bestMatches.take(3).map { it.first }
-        return topPicks.randomOrNull() ?: eligibleCandidates.randomOrNull()
+        // Vary only among near-equal picks, so a clearly worse transition is never chosen.
+        return SmlV2.pickPool(scored).random(random)
     }
+
+    private fun withResolvedMood(song: Song): Song =
+        if (song.dominantMood.isNotBlank()) song
+        else song.copy(dominantMood = AiCategorizer.classifySong(song).first.title)
 
     private fun String.containsAny(vararg terms: String): Boolean {
         return terms.any { this.contains(it, ignoreCase = true) }

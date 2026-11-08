@@ -129,8 +129,7 @@ class PlayerProvider extends ChangeNotifier {
     try {
       // 1. Load and Play
       
-      final playlist = ConcatenatingAudioSource(
-        children: _library.map((t) {
+      final playlist = _library.map((t) {
           final uri = t.path.startsWith('content://') 
              ? Uri.parse(t.path) 
              : Uri.file(t.path);
@@ -145,11 +144,10 @@ class PlayerProvider extends ChangeNotifier {
               duration: Duration(milliseconds: t.duration?.toInt() ?? 0),
             ),
           );
-        }).toList(),
-      );
+        }).toList();
 
       final index = _library.indexWhere((t) => t.path == track.path);
-      await _player.setAudioSource(playlist, initialIndex: index >= 0 ? index : 0);
+      await _player.setAudioSources(playlist, initialIndex: index >= 0 ? index : 0);
       await _player.play();
       
     } catch (e, stack) {

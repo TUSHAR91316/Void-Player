@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.tushar.voidplayer.data.SongRepository
 import com.tushar.voidplayer.model.Song
 import com.tushar.voidplayer.player.AudioPlayer
+import com.tushar.voidplayer.ui.theme.*
 import com.tushar.voidplayer.ui.theme.PrimaryText
 import com.tushar.voidplayer.ui.theme.SecondaryText
 import com.tushar.voidplayer.ui.theme.SurfaceElevated
@@ -50,11 +51,13 @@ fun MiniPlayerPill(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .shadow(16.dp, RoundedCornerShape(20.dp), spotColor = accentColor.copy(alpha = 0.4f))
+            .shadow(if (VoidTheme.isFlat) 0.dp else 16.dp, RoundedCornerShape(20.dp), spotColor = accentColor.copy(alpha = 0.4f))
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick),
-        color = SurfaceElevated,
-        shape = RoundedCornerShape(20.dp)
+        // Graphite: flat raised surface with a hairline instead of an accent glow.
+        color = if (VoidTheme.isFlat) SurfaceSelected else SurfaceElevated,
+        shape = RoundedCornerShape(20.dp),
+        border = if (VoidTheme.isFlat) androidx.compose.foundation.BorderStroke(1.dp, HairlineColor) else null
     ) {
         Column {
             Row(

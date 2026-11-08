@@ -342,6 +342,12 @@ fun VoidAiInsightsCard(
                     )
                 }
             }
+            Text(
+                "Mood and energy are estimates from tags and text; audio samples are not analyzed.",
+                color = SecondaryText,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(top = 8.dp, start = 4.dp)
+            )
         }
     }
 }

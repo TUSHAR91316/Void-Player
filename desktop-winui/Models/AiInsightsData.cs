@@ -34,6 +34,6 @@ public class AiInsightsData
     public int AverageAcousticEnergyPercent { get; set; } = 50;
     public string AcousticEnergyLabel { get; set; } = "Balanced Dynamics";
     public string TopGenresSummary { get; set; } = "Eclectic selection";
-    public string SmlStatusBadge { get; set; } = "SML Acoustic Engine Active";
+    public string SmlStatusBadge { get; set; } = "Tag-based estimates · no audio analysis";
     public List<MoodScoreItem> MoodDistribution { get; set; } = [];
 }

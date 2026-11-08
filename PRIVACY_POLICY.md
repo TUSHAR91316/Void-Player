@@ -35,10 +35,16 @@ Void Player features an on-device Small Machine Learning (SML) engine for smart 
 
 ---
 
-## 4. Internet Access & Network Transmission
+## 4. Internet Access & Optional Network Requests
 
-- Void Player does **not** transmit telemetry, tracking cookies, analytics, or behavioral data over the internet.
-- The Application functions with full capability completely offline.
+Void Player has no telemetry, tracking cookies, advertising, or analytics. The library, playback, AI categorization, and listening history remain on the device. Core playback works offline.
+
+Two user-initiated network features are available in the full distribution:
+
+- **Online lyrics (LRCLIB)** is disabled by default. If enabled in Settings, a request is made only when you choose Fetch or Search. The track title and artist, and optionally album and duration for an exact lookup, are sent to LRCLIB so it can return matching lyrics. The response is stored in the local lyrics cache. Listening history and library contents are not sent.
+- **Check for updates (GitHub Releases API)** contacts GitHub only when you press Check Updates in Settings. The request reads the latest public release metadata. F-Droid builds do not contact GitHub; updates are handled by the F-Droid client.
+
+You can keep both features disabled and use the player without network traffic.
 
 ---
 

@@ -33,7 +33,7 @@ public sealed partial class AIHubPage : Page, INotifyPropertyChanged
         ? "No library analyzed"
         : $"{ViewModel.AiInsights.QualitySummary} | {ViewModel.AiInsights.StreamSummary} | {ViewModel.AiInsights.LibrarySizeText}";
 
-    public string SmlStatusBadgeText => ViewModel?.AiInsights?.SmlStatusBadge ?? "SML Neural Engine v2.3 Active";
+    public string SmlStatusBadgeText => ViewModel?.AiInsights?.SmlStatusBadge ?? "Tag-based estimates · no audio analysis";
     public string AcousticEnergyBadgeText => ViewModel?.AiInsights != null
         ? $"⚡ Acoustic Energy: {ViewModel.AiInsights.AverageAcousticEnergyPercent}% • {ViewModel.AiInsights.AcousticEnergyLabel}"
         : "⚡ Acoustic Energy: Analyzing...";

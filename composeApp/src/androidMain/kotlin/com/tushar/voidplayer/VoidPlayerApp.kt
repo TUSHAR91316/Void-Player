@@ -1,4 +1,4 @@
-﻿package com.tushar.voidplayer
+package com.tushar.voidplayer
 
 import android.app.Application
 import com.tushar.voidplayer.player.AndroidAudioPlayer

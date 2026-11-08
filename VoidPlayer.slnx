@@ -2,4 +2,7 @@
   <Folder Name="/desktop-winui/">
     <Project Path="desktop-winui/VoidPlayer.WinUI.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="desktop-winui.Tests/VoidPlayer.WinUI.Tests.csproj" />
+  </Folder>
 </Solution>

@@ -1,4 +1,4 @@
-﻿package com.tushar.voidplayer.utils
+package com.tushar.voidplayer.utils
 
 import com.tushar.voidplayer.ui.components.formatTime
 import kotlin.test.Test

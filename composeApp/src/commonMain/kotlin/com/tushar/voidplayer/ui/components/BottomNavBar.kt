@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tushar.voidplayer.ui.theme.*
 import com.tushar.voidplayer.ui.theme.PrimaryText
 import com.tushar.voidplayer.ui.theme.SecondaryText
 import com.tushar.voidplayer.ui.theme.SurfaceElevated
@@ -58,10 +59,11 @@ fun BottomNavBar(
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .shadow(20.dp, RoundedCornerShape(28.dp), spotColor = Color.Black.copy(alpha = 0.6f))
+            .shadow(if (VoidTheme.isFlat) 0.dp else 20.dp, RoundedCornerShape(28.dp), spotColor = Color.Black.copy(alpha = 0.6f))
             .clip(RoundedCornerShape(28.dp)),
-        color = SurfaceElevated,
-        shape = RoundedCornerShape(28.dp)
+        color = if (VoidTheme.isFlat) SurfacePane else SurfaceElevated,
+        shape = RoundedCornerShape(28.dp),
+        border = if (VoidTheme.isFlat) androidx.compose.foundation.BorderStroke(1.dp, HairlineColor) else null
     ) {
         Row(
             modifier = Modifier
@@ -73,14 +75,17 @@ fun BottomNavBar(
             items.forEachIndexed { index, item ->
                 val isSelected = selectedTab == index
                 val scale by animateFloatAsState(if (isSelected) 1.08f else 1.0f)
-                val iconTint by animateColorAsState(if (isSelected) accentColor else SecondaryText)
+                // Graphite marks the selected tab with a neutral thumb; Classic tints it with the accent.
+                val flat = VoidTheme.isFlat
+                val iconTint by animateColorAsState(if (isSelected) (if (flat) PrimaryText else accentColor) else SecondaryText)
                 val textTint by animateColorAsState(if (isSelected) PrimaryText else SecondaryText)
+                val selectedBackground = if (flat) HairlineColor else accentColor.copy(alpha = 0.15f)
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (isSelected) accentColor.copy(alpha = 0.15f) else Color.Transparent)
+                        .background(if (isSelected) selectedBackground else Color.Transparent)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null

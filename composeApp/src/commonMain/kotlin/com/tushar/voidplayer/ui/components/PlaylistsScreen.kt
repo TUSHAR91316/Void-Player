@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material3.*
@@ -39,13 +40,18 @@ fun PlaylistsScreen(
     accentColor: Color,
     onCreatePlaylist: (String) -> Unit,
     onDeletePlaylist: (String) -> Unit,
-    onToggleFavorite: ((Song) -> Unit)? = null
+    onToggleFavorite: ((Song) -> Unit)? = null,
+    onPickM3uImport: () -> Unit = {},
+    onExportPlaylist: (Playlist) -> Unit = {}
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
     var newPlaylistName by remember { mutableStateOf("") }
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onPickM3uImport) { Text("Import M3U/M3U8", color = accentColor) }
+        }
         // Create Playlist Card
         Surface(
             modifier = Modifier
@@ -134,6 +140,9 @@ fun PlaylistsScreen(
                             }
 
                             Row {
+                                IconButton(onClick = { onExportPlaylist(pl) }) {
+                                    Icon(Icons.Filled.FileDownload, contentDescription = "Export ${pl.name} as M3U8", tint = accentColor)
+                                }
                                 IconButton(onClick = {
                                     if (plSongs.isNotEmpty()) {
                                         player.setPlaylist(plSongs)

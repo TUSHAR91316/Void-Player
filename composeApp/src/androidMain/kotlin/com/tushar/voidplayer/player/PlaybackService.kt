@@ -1,4 +1,4 @@
-﻿package com.tushar.voidplayer.player
+package com.tushar.voidplayer.player
 
 import android.content.Intent
 import androidx.media3.session.MediaSession
@@ -20,6 +20,16 @@ class PlaybackService : MediaSessionService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val isPlaying = try {
+            VoidPlayerApp.instance.player.isPlaying.value
+        } catch (_: Throwable) {
+            false
+        }
+        if (!isPlaying) stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onDestroy() {

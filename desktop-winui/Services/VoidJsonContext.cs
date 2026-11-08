@@ -12,4 +12,6 @@ namespace VoidPlayer.WinUI.Services;
 [JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(AudioCodecInfo))]
 [JsonSerializable(typeof(double[]))]
+[JsonSerializable(typeof(Dictionary<string, double[]>))]
+[JsonSerializable(typeof(Dictionary<string, SmlV2.ListeningStats>))]
 public partial class VoidJsonContext : JsonSerializerContext;

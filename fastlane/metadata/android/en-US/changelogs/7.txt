@@ -1,0 +1,9 @@
+Void Player 2.4.0 — Solid Ground
+
+• Favorites, first-launch library and queue order fixed
+• Equalizer presets and custom bands persist
+• AI DJ Smart Flow works on Android
+• Tag editor for title, artist, album, year, track, BPM, key and lyrics
+• Better synced lyrics; online lyrics are opt-in
+• Lock-screen artwork, queue editing and M3U import/export
+• Resumes your last queue paused

@@ -1,15 +1,11 @@
 [versions]
-kotlin = "2.1.0"
-compose-plugin = "1.7.1"
+kotlin = "2.3.21"
+compose-plugin = "1.11.1"
 android-gradle-plugin = "8.13.2"
 androidx-activity = "1.9.3"
 androidx-core = "1.15.0"
-voyager = "1.1.0-beta03"
-koin = "4.0.0"
-on-audio-query = "3.0.0" 
-exoplayer = "2.19.1"
-media3 = "1.4.1"
-vlcj = "4.8.3"
+media3 = "1.11.1"
+jaudiotagger = "3.0.1"
 palette = "1.0.0"
 documentfile = "1.0.1"
 
@@ -27,15 +23,8 @@ androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
+jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger" }
 
-# Desktop
-vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
-
-# Shared Logic
-voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
-voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
-koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
-koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

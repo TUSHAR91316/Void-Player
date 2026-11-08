@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Plain .NET tests for desktop logic that has no WinUI dependency. Source files are
+    linked from desktop-winui rather than referencing the packaged WinUI app project.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\desktop-winui\Services\LibraryMerge.cs" Link="Linked\LibraryMerge.cs" />
+    <Compile Include="..\desktop-winui\Services\SmlV2.cs" Link="Linked\SmlV2.cs" />
+    <Compile Include="..\desktop-winui\Services\M3uPlaylistCodec.cs" Link="Linked\M3uPlaylistCodec.cs" />
+    <Compile Include="..\desktop-winui\Services\LrcLyricsParser.cs" Link="Linked\LrcLyricsParser.cs" />
+    <Compile Include="..\desktop-winui\Services\AccentContrast.cs" Link="Linked\AccentContrast.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.0.2" />
+  </ItemGroup>
+
+</Project>

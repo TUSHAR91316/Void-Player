@@ -12,68 +12,41 @@
         <MicaBackdrop/>
     </Window.SystemBackdrop>
 
-    <Grid Background="#070C0A">
+    <Grid Background="{StaticResource VoidGroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Custom Dark Glass TitleBar -->
+        <!-- Title bar: one brand mark and the version, nothing else (caption buttons sit on the right) -->
         <Grid x:Name="AppTitleBar"
               Grid.Row="0"
-              Height="42"
-              Background="#0A120E"
-              BorderBrush="#16251D"
+              Height="40"
+              Background="{StaticResource VoidGroundBrush}"
+              BorderBrush="{StaticResource VoidSelectedBrush}"
               BorderThickness="0,0,0,1"
-              Padding="14,0,14,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Brand Icon & App Title -->
-            <StackPanel Grid.Column="0"
-                    Orientation="Horizontal"
-                    Spacing="10"
-                    VerticalAlignment="Center">
-                <Border Width="24"
-                        Height="24"
-                        CornerRadius="5"
-                        Background="#111D17">
-                    <Image x:Name="TitleBarIconImage"
-                            Stretch="UniformToFill"
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Void Player"
-                        FontWeight="SemiBold"
-                        FontSize="13"
-                        Foreground="#FFFFFF"
-                        VerticalAlignment="Center"/>
-                <Border Background="#132B1F"
-                        CornerRadius="4"
-                        Padding="6,2,6,2"
+              Padding="16,0,16,0">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="10"
                         VerticalAlignment="Center">
-                    <TextBlock Text="v2.3"
-                            FontSize="10"
-                            FontWeight="Bold"
-                            Foreground="#00E575"/>
-                </Border>
-                <Border Width="4"
-                        Height="4"
-                        CornerRadius="2"
-                        Background="#4B5563"
-                        VerticalAlignment="Center"/>
-                <TextBlock Text="Hi-Fi Audio Experience"
-                        FontSize="12"
-                        Foreground="#8B9E94"
-                        VerticalAlignment="Center"/>
+                <Image x:Name="TitleBarIconImage"
+                       Stretch="Uniform"
+                       Width="16"
+                       Height="16"
+                       VerticalAlignment="Center"/>
+                <TextBlock Text="Void Player"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource VoidTextBrush}"
+                           VerticalAlignment="Center"/>
+                <TextBlock Text="{x:Bind AppVersion, Mode=OneTime}"
+                           FontSize="12"
+                           Foreground="{StaticResource VoidMutedTextBrush}"
+                           VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>
 
         <Frame x:Name="RootFrame"
-                Grid.Row="1"/>
+               Grid.Row="1"/>
     </Grid>
 </Window>

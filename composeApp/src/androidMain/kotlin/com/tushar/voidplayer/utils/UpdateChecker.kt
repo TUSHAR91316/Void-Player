@@ -23,15 +23,26 @@ object UpdateChecker {
                 @Suppress("DEPRECATION")
                 pm.getPackageInfo(context.packageName, 0)
             }
-            pInfo.versionName ?: "2.3"
+            pInfo.versionName ?: com.tushar.voidplayer.BuildConfig.VERSION_NAME
         } catch (_: Throwable) {
-            "2.3"
+            com.tushar.voidplayer.BuildConfig.VERSION_NAME
         }
     }
 
     suspend fun checkForUpdates(context: Context): UpdateInfo = withContext(Dispatchers.IO) {
         val currentVersion = getAppVersionName(context)
         val isFdroid = isInstalledViaFdroid(context)
+        if (isFdroid) {
+            return@withContext UpdateInfo(
+                isUpdateAvailable = false,
+                latestVersion = currentVersion,
+                currentVersion = currentVersion,
+                releaseNotes = "Updates are managed by your F-Droid client.",
+                downloadUrl = null,
+                releasePageUrl = "",
+                isFdroidInstall = true
+            )
+        }
         try {
             val url = URL(GITHUB_API_URL)
             val connection = (url.openConnection() as HttpURLConnection).apply {
@@ -97,6 +108,7 @@ object UpdateChecker {
     }
 
     private fun isInstalledViaFdroid(context: Context): Boolean {
+        if (com.tushar.voidplayer.BuildConfig.DISTRIBUTION == "fdroid") return true
         return try {
             val pm = context.packageManager
             val installer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -111,7 +123,7 @@ object UpdateChecker {
         }
     }
 
-    private fun isVersionNewer(remote: String, current: String): Boolean {
+    internal fun isVersionNewer(remote: String, current: String): Boolean {
         if (remote.isBlank()) return false
         val remoteParts = remote.split('.').mapNotNull { it.toIntOrNull() }
         val currentParts = current.split('.').mapNotNull { it.toIntOrNull() }

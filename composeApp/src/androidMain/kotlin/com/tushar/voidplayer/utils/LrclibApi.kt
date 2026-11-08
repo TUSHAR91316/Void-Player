@@ -20,7 +20,7 @@ object LrclibApi {
 
     private const val TAG = "LrclibApi"
     private const val BASE_URL = "https://lrclib.net/api"
-    private const val USER_AGENT = "VoidPlayer/2.3 (https://github.com/TUSHAR91316/Void-Player)"
+    private val USER_AGENT = "VoidPlayer/${com.tushar.voidplayer.BuildConfig.VERSION_NAME} (https://github.com/TUSHAR91316/Void-Player)"
     private const val TIMEOUT_MS = 5000
 
     /**
@@ -64,9 +64,21 @@ object LrclibApi {
                 val json = JSONObject(responseText)
                 return@withContext parseJsonResult(json)
             } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-                // If exact match not found, attempt search fallback
+                // Only accept a fallback that is clearly the requested artist and track length.
+                // Check that first so no search request is sent when it cannot be verified.
+                val wantedArtist = normalizeArtist(cleanArtist)
+                if (wantedArtist.isBlank() || durationSeconds == null || durationSeconds <= 0) return@withContext null
                 val searchResults = searchLyrics("$cleanTitle $cleanArtist")
-                return@withContext searchResults.firstOrNull()
+                return@withContext searchResults
+                    .asSequence()
+                    .filter {
+                        val foundArtist = normalizeArtist(it.artistName)
+                        foundArtist.isNotBlank() && (foundArtist == wantedArtist || foundArtist.contains(wantedArtist) || wantedArtist.contains(foundArtist))
+                    }
+                    .map { result -> result to kotlin.math.abs(result.durationSeconds - durationSeconds) }
+                    .filter { (_, deltaSeconds) -> deltaSeconds <= 3 }
+                    .minByOrNull { (_, deltaSeconds) -> deltaSeconds }
+                    ?.first
             }
         } catch (e: Throwable) {
             Log.w(TAG, "Failed to get lyrics from LRCLIB: ${e.message}")
@@ -130,9 +142,9 @@ object LrclibApi {
         )
     }
 
-    private fun cleanSearchTerm(term: String): String {
-        // Strip out file extensions and trailing noise like (Official Video), [Remastered], etc.
-        return term.substringBeforeLast('.')
+    internal fun cleanSearchTerm(term: String): String {
+        // Strip known audio extensions only: dots are common in titles and artist names.
+        return term.replace(Regex("(?i)\\.(mp3|flac|m4a|ogg|opus|wav|aac|wma)$"), "")
             .replace(Regex("""(?i)\(official(\s+video|\s+audio|\s+music\s+video)?\)"""), "")
             .replace(Regex("""(?i)\[official(\s+video|\s+audio)?\]"""), "")
             .replace(Regex("""(?i)\(lyric(\s+video)?\)"""), "")
@@ -141,4 +153,8 @@ object LrclibApi {
             .replace(Regex("""(?i)\(feat\.[^\)]*\)"""), "")
             .trim()
     }
+
+    private fun normalizeArtist(artist: String): String = artist
+        .lowercase()
+        .replace(Regex("[^\\p{L}\\p{N}]"), "")
 }

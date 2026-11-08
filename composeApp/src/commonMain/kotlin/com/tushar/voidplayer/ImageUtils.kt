@@ -1,5 +1,5 @@
-﻿package com.tushar.voidplayer
+package com.tushar.voidplayer
 
 import androidx.compose.ui.graphics.ImageBitmap
 
-expect fun ByteArray.toImageBitmap(): ImageBitmap
+expect fun ByteArray.toImageBitmap(): ImageBitmap?

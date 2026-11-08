@@ -20,17 +20,7 @@ public sealed partial class MainPage : Page
         // Default to All Songs on load
         Loaded += (_, _) =>
         {
-            try
-            {
-                var logoPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Square44x44Logo.png");
-                if (System.IO.File.Exists(logoPath))
-                {
-                    NavHeaderLogo.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(logoPath));
-                }
-            }
-            catch { }
-
-            NavView.SelectedItem = NavView.MenuItems[0];
+            NavView.SelectedItem = SongsNavItem;
             ContentFrame.Navigate(typeof(SongsPage), ViewModel);
             NowPlayingFrame.Navigate(typeof(NowPlayingPage), ViewModel);
         };
@@ -43,6 +33,22 @@ public sealed partial class MainPage : Page
             NowPlayingOverlay.Visibility = ViewModel.IsNowPlayingExpanded
                 ? Microsoft.UI.Xaml.Visibility.Visible
                 : Microsoft.UI.Xaml.Visibility.Collapsed;
+        }
+    }
+
+    // The first menu entry is the "Library" header, so look the Songs item up by tag.
+    private NavigationViewItem? SongsNavItem => NavView.MenuItems
+        .OfType<NavigationViewItem>()
+        .FirstOrDefault(item => item.Tag as string == "Songs");
+
+    /// <summary>Search lives in the navigation pane; typing from another page shows the results in Songs.</summary>
+    private void OnSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput || string.IsNullOrEmpty(sender.Text)) return;
+        if (ViewModel.IsNowPlayingExpanded) ViewModel.IsNowPlayingExpanded = false;
+        if (ContentFrame.CurrentSourcePageType != typeof(SongsPage) && SongsNavItem is { } songs)
+        {
+            NavView.SelectedItem = songs;
         }
     }
 

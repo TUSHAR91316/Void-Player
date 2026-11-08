@@ -15,225 +15,177 @@
         <converters:BoolToHeartGlyphConverter x:Key="BoolToHeartGlyphConverter"/>
         <converters:BoolToHeartBrushConverter x:Key="BoolToHeartBrushConverter"/>
         <converters:PlayingRowBackgroundConverter x:Key="PlayingRowBackgroundConverter"/>
+        <converters:PlayingTitleBrushConverter x:Key="PlayingTitleBrushConverter"/>
+        <converters:TrueToVisibleConverter x:Key="TrueToVisibleConverter"/>
     </Page.Resources>
 
-    <Grid Padding="32,24,32,0">
+    <Grid Padding="32,28,32,0" RowSpacing="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- HEADER & ACTIONS -->
-        <Grid Grid.Row="0"
-              Margin="0,0,0,16">
-            <StackPanel Spacing="4">
-                <TextBlock Text="Void Player"
-                           FontSize="28"
-                           FontWeight="Bold"
-                           Foreground="#FFFFFF"/>
-                <TextBlock Text="{x:Bind HeaderStatsText, Mode=OneWay}"
-                           Foreground="#8B9E94"
-                           FontSize="13"/>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        Spacing="10">
-                <AutoSuggestBox Width="260"
-                                PlaceholderText="Search library..."
-                                QueryIcon="Find"
-                                Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay}"/>
-
-                <Button Style="{StaticResource SubtleButtonStyle}"
-                        Click="OnAddFolderClick"
-                        ToolTipService.ToolTip="Open &amp; Add Music Folder">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="6">
-                        <FontIcon Glyph="&#xED25;"
-                                  FontSize="15"
-                                  Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"/>
-                        <TextBlock Text="Add Folder"
-                                   FontSize="12"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Style="{StaticResource SubtleButtonStyle}"
-                        Click="OnScanClick"
-                        ToolTipService.ToolTip="Rescan Library">
-                    <FontIcon Glyph="&#xE72C;"
-                              FontSize="14"/>
-                </Button>
-            </StackPanel>
-        </Grid>
-
-        <!-- ACTION BUTTONS & FILTER PILLS & SORT -->
-        <Grid Grid.Row="1"
-              Margin="0,0,0,16">
+        <!-- HEADER: page title + list stats, library actions on the right. Search lives in the nav pane. -->
+        <Grid Grid.Row="0" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-
-            <!-- Left: Play All, Shuffle All, Filter Pills -->
-            <StackPanel Grid.Column="0"
-                        Orientation="Horizontal"
-                        Spacing="10">
-                <Button Style="{StaticResource AccentButtonStyle}"
-                        Click="OnPlayAllClick">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8">
-                        <FontIcon Glyph="&#xE768;"
-                                  FontSize="14"/>
-                        <TextBlock Text="Play All"
-                                   FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Style="{StaticResource DefaultButtonStyle}"
-                        Click="OnShuffleAllClick">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8">
-                        <FontIcon Glyph="&#xE8B1;"
-                                  FontSize="14"/>
-                        <TextBlock Text="Shuffle All"/>
-                    </StackPanel>
-                </Button>
-
-                <!-- Filter Pills -->
-                <Button Style="{StaticResource SubtleButtonStyle}"
-                        Background="{x:Bind AllPillBackground, Mode=OneWay}"
-                        BorderBrush="{x:Bind AllPillBorder, Mode=OneWay}"
-                        BorderThickness="1"
-                        CornerRadius="16"
-                        Padding="14,6,14,6"
-                        Click="OnFilterAllClick">
-                    <TextBlock Text="{x:Bind AllFilterText, Mode=OneWay}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{x:Bind AllPillForeground, Mode=OneWay}"/>
-                </Button>
-
-                <Button Style="{StaticResource SubtleButtonStyle}"
-                        Background="{x:Bind FavsPillBackground, Mode=OneWay}"
-                        BorderBrush="{x:Bind FavsPillBorder, Mode=OneWay}"
-                        BorderThickness="1"
-                        CornerRadius="16"
-                        Padding="14,6,14,6"
-                        Click="OnFilterFavsClick">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="6">
-                        <FontIcon Glyph="&#xEB52;"
-                                  FontSize="12"
-                                  Foreground="#F43F5E"
-                                  VerticalAlignment="Center"/>
-                        <TextBlock Text="{x:Bind FavsFilterText, Mode=OneWay}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{x:Bind FavsPillForeground, Mode=OneWay}"/>
-                    </StackPanel>
-                </Button>
+            <StackPanel Spacing="4" VerticalAlignment="Bottom">
+                <TextBlock Text="Songs"
+                           Style="{StaticResource VoidPageTitleTextStyle}"/>
+                <TextBlock Text="{x:Bind HeaderStatsText, Mode=OneWay}"
+                           FontSize="13"
+                           Foreground="{StaticResource VoidTextSecondaryBrush}"/>
             </StackPanel>
 
-            <!-- Right: Sort Menu Dropdown -->
-            <DropDownButton Grid.Column="1"
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Bottom"
+                        Spacing="8">
+                <Button Style="{StaticResource VoidSecondaryButtonStyle}"
+                        Background="Transparent"
+                        Click="OnAddFolderClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xED25;" FontSize="14"/>
+                        <TextBlock Text="Add folder"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource VoidSecondaryButtonStyle}"
+                        Background="Transparent"
+                        Width="36"
+                        Padding="0"
+                        Click="OnScanClick"
+                        AutomationProperties.Name="Rescan library"
+                        ToolTipService.ToolTip="Rescan library">
+                    <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- TOOLBAR: one accent action, secondary shuffle, segmented filter, sort -->
+        <Grid Grid.Row="1" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Style="{StaticResource VoidAccentButtonStyle}"
+                    Click="OnPlayAllClick">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE768;" FontSize="13"/>
+                    <TextBlock Text="Play all"/>
+                </StackPanel>
+            </Button>
+
+            <Button Grid.Column="1"
+                    Style="{StaticResource VoidSecondaryButtonStyle}"
+                    Click="OnShuffleAllClick">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE8B1;" FontSize="13"/>
+                    <TextBlock Text="Shuffle"/>
+                </StackPanel>
+            </Button>
+
+            <Border Grid.Column="2"
+                    Margin="8,0,0,0"
+                    Style="{StaticResource VoidSegmentHostStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Style="{StaticResource SubtleButtonStyle}"
+                            Background="{x:Bind AllPillBackground, Mode=OneWay}"
+                            Height="28"
+                            Padding="12,0,12,0"
+                            Click="OnFilterAllClick"
+                            AutomationProperties.Name="Show all songs">
+                        <TextBlock Text="{x:Bind AllFilterText, Mode=OneWay}"
+                                   FontSize="13"
+                                   Foreground="{x:Bind AllPillForeground, Mode=OneWay}"/>
+                    </Button>
+                    <Button Style="{StaticResource SubtleButtonStyle}"
+                            Background="{x:Bind FavsPillBackground, Mode=OneWay}"
+                            Height="28"
+                            Padding="12,0,12,0"
+                            Click="OnFilterFavsClick"
+                            AutomationProperties.Name="Show favorites">
+                        <TextBlock Text="{x:Bind FavsFilterText, Mode=OneWay}"
+                                   FontSize="13"
+                                   Foreground="{x:Bind FavsPillForeground, Mode=OneWay}"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <DropDownButton Grid.Column="4"
                             Content="{x:Bind CurrentSortText, Mode=OneWay}"
-                            Style="{StaticResource SubtleButtonStyle}">
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Height="36"
+                            Padding="10,0,10,0"
+                            FontSize="13"
+                            Foreground="{StaticResource VoidTextSecondaryBrush}">
                 <DropDownButton.Flyout>
-                    <MenuFlyout Placement="Bottom">
-                        <MenuFlyoutItem Text="Sort: Title"
-                                        Click="OnSortTitleClick">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE8D6;"/>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="Sort: Artist"
-                                        Click="OnSortArtistClick">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE77B;"/>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="Sort: Album"
-                                        Click="OnSortAlbumClick">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE93C;"/>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="Sort: Duration"
-                                        Click="OnSortDurationClick">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE823;"/>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="Sort: Date Added"
-                                        Click="OnSortDateAddedClick">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xEC92;"/>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
+                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                        <MenuFlyoutItem Text="Title" Click="OnSortTitleClick"/>
+                        <MenuFlyoutItem Text="Artist" Click="OnSortArtistClick"/>
+                        <MenuFlyoutItem Text="Album" Click="OnSortAlbumClick"/>
+                        <MenuFlyoutItem Text="Duration" Click="OnSortDurationClick"/>
+                        <MenuFlyoutItem Text="Date added" Click="OnSortDateAddedClick"/>
                     </MenuFlyout>
                 </DropDownButton.Flyout>
             </DropDownButton>
         </Grid>
 
-        <!-- EMPTY STATE (Shown when library is empty) -->
-        <Border Grid.Row="2"
-                Visibility="{x:Bind EmptyStateVisibility, Mode=OneWay}"
-                Background="#0B130F"
-                BorderBrush="#1A2D22"
-                BorderThickness="1"
-                CornerRadius="16"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Padding="40"
-                MaxWidth="480">
-            <StackPanel Spacing="16"
-                        HorizontalAlignment="Center">
-                <Border Width="80"
-                        Height="80"
-                        CornerRadius="40"
-                        Background="{x:Bind ViewModel.DynamicGlowBrush, Mode=OneWay}"
-                        BorderBrush="{x:Bind ViewModel.DynamicBorderBrush, Mode=OneWay}"
-                        BorderThickness="1"
-                        HorizontalAlignment="Center">
-                    <FontIcon Glyph="&#xED25;"
-                              FontSize="32"
-                              Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-                </Border>
-                <StackPanel Spacing="6"
-                            HorizontalAlignment="Center">
-                    <TextBlock Text="Your Void Library is Empty"
-                               FontSize="20"
-                               FontWeight="Bold"
-                               TextAlignment="Center"
-                               Foreground="#FFFFFF"/>
-                    <TextBlock Text="Select a music folder on your PC to load lossless Hi-Fi tracks."
-                               FontSize="13"
-                               Foreground="#8B9E94"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"/>
+        <!-- EMPTY LIBRARY -->
+        <StackPanel Grid.Row="2"
+                    Visibility="{x:Bind EmptyStateVisibility, Mode=OneWay}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MaxWidth="420"
+                    Spacing="12"
+                    Margin="0,0,0,80">
+            <FontIcon Glyph="&#xE8D6;"
+                      FontSize="32"
+                      Foreground="{StaticResource VoidMutedTextBrush}"
+                      HorizontalAlignment="Center"/>
+            <TextBlock Text="No music yet"
+                       Style="{StaticResource VoidSectionTitleTextStyle}"
+                       TextAlignment="Center"/>
+            <TextBlock Text="Add a folder on this PC. Void Player reads it in place and keeps watching it for new files."
+                       FontSize="14"
+                       LineHeight="20"
+                       Foreground="{StaticResource VoidTextSecondaryBrush}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"/>
+            <Button Style="{StaticResource VoidAccentButtonStyle}"
+                    HorizontalAlignment="Center"
+                    Margin="0,8,0,0"
+                    Click="OnAddFolderClick">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xED25;" FontSize="13"/>
+                    <TextBlock Text="Add music folder"/>
                 </StackPanel>
-                <Button Style="{StaticResource AccentButtonStyle}"
-                        HorizontalAlignment="Center"
-                        Padding="20,10,20,10"
-                        Click="OnAddFolderClick">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8">
-                        <FontIcon Glyph="&#xED25;"
-                                  FontSize="14"/>
-                        <TextBlock Text="Choose Music Folder"
-                                   FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </Border>
+            </Button>
+        </StackPanel>
+
+        <!-- FILTERED TO NOTHING (search or favorites) -->
+        <TextBlock Grid.Row="2"
+                   Visibility="{x:Bind NoResultsVisibility, Mode=OneWay}"
+                   Text="{x:Bind NoResultsText, Mode=OneWay}"
+                   FontSize="14"
+                   Foreground="{StaticResource VoidTextSecondaryBrush}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Margin="0,0,0,80"/>
 
         <!-- VIRTUALIZED SONGS LIST -->
         <ListView x:Name="SongsListView"
                   Grid.Row="2"
+                  Margin="-8,0,-8,0"
                   Visibility="{x:Bind SongsListVisibility, Mode=OneWay}"
                   ItemsSource="{x:Bind ViewModel.FilteredSongs, Mode=OneWay}"
                   ItemClick="OnSongItemClick"
@@ -249,145 +201,137 @@
             </ListView.ItemsPanel>
 
             <ListView.Header>
-                <Grid Padding="12,8,12,8"
-                      BorderBrush="#1A2D22"
-                      BorderThickness="0,0,0,1"
-                      Margin="0,0,0,4">
+                <Grid Height="32"
+                      Margin="20,0,20,4"
+                      BorderBrush="{StaticResource VoidSelectedBrush}"
+                      BorderThickness="0,0,0,1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="48"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="1.2*"
-                                          MinWidth="140"/>
-                        <ColumnDefinition Width="Auto"
-                                          MinWidth="96"/>
+                        <ColumnDefinition Width="52"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="1.4*" MinWidth="140"/>
+                        <ColumnDefinition Width="112"/>
                         <ColumnDefinition Width="44"/>
-                        <ColumnDefinition Width="70"
-                                          MinWidth="64"/>
+                        <ColumnDefinition Width="64"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                               Text="#"
-                               Foreground="#8B9E94"
-                               FontSize="12"/>
-                    <TextBlock Grid.Column="1"
-                               Text="Title"
-                               Foreground="#8B9E94"
-                               FontSize="12"/>
-                    <TextBlock Grid.Column="2"
-                               Text="Album"
-                               Foreground="#8B9E94"
-                               FontSize="12"/>
-                    <TextBlock Grid.Column="3"
-                               Text="Codec"
-                               Foreground="#8B9E94"
-                               FontSize="12"/>
-                    <TextBlock Grid.Column="4"
-                               Text=""
-                               HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="5"
-                               Text="Time"
-                               Foreground="#8B9E94"
-                               FontSize="12"
-                               HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="1" Text="Title" Style="{StaticResource VoidLabelTextStyle}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <TextBlock Grid.Column="2" Text="Album" Style="{StaticResource VoidLabelTextStyle}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="3" Text="Format" Style="{StaticResource VoidLabelTextStyle}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="5" Text="Time" Style="{StaticResource VoidLabelTextStyle}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                 </Grid>
             </ListView.Header>
 
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                    <Setter Property="Padding" Value="12,0,12,0"/>
+                    <Setter Property="MinHeight" Value="56"/>
+                    <Setter Property="CornerRadius" Value="6"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:SongItem">
-                    <Border Background="{x:Bind IsCurrentlyPlaying, Mode=OneWay, Converter={StaticResource PlayingRowBackgroundConverter}}"
-                            BorderBrush="{x:Bind IsCurrentlyPlaying, Mode=OneWay, Converter={StaticResource PlayingRowBackgroundConverter}}"
-                            BorderThickness="3,0,0,0"
-                            Padding="4,6,4,6">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="48"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="1.2*"
-                                                  MinWidth="140"/>
-                                <ColumnDefinition Width="Auto"
-                                                  MinWidth="96"/>
-                                <ColumnDefinition Width="44"/>
-                                <ColumnDefinition Width="70"
-                                                  MinWidth="64"/>
-                            </Grid.ColumnDefinitions>
+                    <Grid Height="56"
+                          CornerRadius="6"
+                          Background="{x:Bind IsCurrentlyPlaying, Mode=OneWay, Converter={StaticResource PlayingRowBackgroundConverter}}">
+                        <Grid.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Edit tags" Tag="{x:Bind}" Click="OnEditTagsClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE70F;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Grid.ContextFlyout>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="52"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="1.4*" MinWidth="140"/>
+                            <ColumnDefinition Width="112"/>
+                            <ColumnDefinition Width="44"/>
+                            <ColumnDefinition Width="64"/>
+                        </Grid.ColumnDefinitions>
 
-                            <!-- Thumbnail or Note Icon -->
-                            <Grid Grid.Column="0"
-                                  Width="36"
-                                  Height="36"
-                                  CornerRadius="6">
-                                <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="6">
-                                    <FontIcon Glyph="&#xE8D6;"
-                                              FontSize="14"
-                                              Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
-                                </Border>
-                                <Image Stretch="UniformToFill"
-                                       Source="{x:Bind ArtCacheImageSource, Mode=OneTime}"
-                                       Visibility="{Binding ArtCachePath, Converter={StaticResource NullToVisibilityConverter}}"/>
-                            </Grid>
-
-                            <!-- Title and Artist -->
-                            <StackPanel Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        Margin="8,0,12,0">
-                                <TextBlock Text="{x:Bind Title}"
-                                           FontWeight="SemiBold"
-                                           FontSize="13"
-                                           TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{x:Bind Artist}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           FontSize="12"
-                                           TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
-
-                            <!-- Album -->
-                            <TextBlock Grid.Column="2"
-                                       Text="{x:Bind Album}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                       FontSize="13"
-                                       VerticalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis"/>
-
-                            <!-- Codec Pill Badge -->
-                            <Border Grid.Column="3"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"
-                                    Padding="6,2,6,2"
-                                    CornerRadius="4"
-                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
-                                <TextBlock Text="{x:Bind CodecBadge}"
-                                           FontSize="11"
-                                           FontWeight="SemiBold"
-                                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                        <!-- Artwork; while playing a scrim + glyph replaces the decoration of a colored stripe -->
+                        <Grid Grid.Column="0"
+                              Width="40"
+                              Height="40"
+                              Margin="8,0,0,0"
+                              CornerRadius="4"
+                              HorizontalAlignment="Left"
+                              Background="{StaticResource VoidSelectedBrush}">
+                            <FontIcon Glyph="&#xE8D6;"
+                                      FontSize="14"
+                                      Foreground="{StaticResource VoidMutedTextBrush}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            <Image Stretch="UniformToFill"
+                                   Source="{x:Bind ArtCacheImageSource, Mode=OneTime}"
+                                   Visibility="{Binding ArtCachePath, Converter={StaticResource NullToVisibilityConverter}}"/>
+                            <Border Background="#B30F1012"
+                                    Visibility="{x:Bind IsCurrentlyPlaying, Mode=OneWay, Converter={StaticResource TrueToVisibleConverter}}">
+                                <FontIcon Glyph="&#xE768;"
+                                          FontSize="14"
+                                          Foreground="{StaticResource VoidAccentBrush}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          AutomationProperties.Name="Playing"/>
                             </Border>
-
-                            <!-- Favorite Toggle Heart Button -->
-                            <Button Grid.Column="4"
-                                    Width="32"
-                                    Height="32"
-                                    Padding="0"
-                                    Style="{StaticResource SubtleButtonStyle}"
-                                    Click="OnItemFavoriteClick"
-                                    Tag="{x:Bind}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    ToolTipService.ToolTip="Favorite">
-                                <FontIcon Glyph="{x:Bind IsFavorite, Mode=OneWay, Converter={StaticResource BoolToHeartGlyphConverter}}"
-                                          FontSize="13"
-                                          Foreground="{x:Bind IsFavorite, Mode=OneWay, Converter={StaticResource BoolToHeartBrushConverter}}"/>
-                            </Button>
-
-                            <!-- Duration -->
-                            <TextBlock Grid.Column="5"
-                                       Text="{x:Bind FormattedDuration}"
-                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                       FontSize="12"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Right"/>
                         </Grid>
-                    </Border>
+
+                        <StackPanel Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Spacing="2"
+                                    Margin="12,0,12,0">
+                            <TextBlock Text="{x:Bind Title}"
+                                       FontWeight="SemiBold"
+                                       FontSize="14"
+                                       Foreground="{x:Bind IsCurrentlyPlaying, Mode=OneWay, Converter={StaticResource PlayingTitleBrushConverter}}"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{x:Bind Artist}"
+                                       Foreground="{StaticResource VoidTextSecondaryBrush}"
+                                       FontSize="12"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="2"
+                                   Text="{x:Bind Album}"
+                                   Foreground="{StaticResource VoidTextSecondaryBrush}"
+                                   FontSize="13"
+                                   Margin="0,0,16,0"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
+
+                        <TextBlock Grid.Column="3"
+                                   Text="{x:Bind CodecBadge}"
+                                   FontSize="12"
+                                   Foreground="{StaticResource VoidTextSecondaryBrush}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
+
+                        <Button Grid.Column="4"
+                                Style="{StaticResource VoidIconButtonStyle}"
+                                Width="36"
+                                Height="36"
+                                Click="OnItemFavoriteClick"
+                                Tag="{x:Bind}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                AutomationProperties.Name="Favorite"
+                                ToolTipService.ToolTip="Favorite">
+                            <FontIcon Glyph="{x:Bind IsFavorite, Mode=OneWay, Converter={StaticResource BoolToHeartGlyphConverter}}"
+                                      FontSize="14"
+                                      Foreground="{x:Bind IsFavorite, Mode=OneWay, Converter={StaticResource BoolToHeartBrushConverter}}"/>
+                        </Button>
+
+                        <TextBlock Grid.Column="5"
+                                   Text="{x:Bind FormattedDuration}"
+                                   Foreground="{StaticResource VoidTextSecondaryBrush}"
+                                   FontSize="13"
+                                   Margin="0,0,8,0"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

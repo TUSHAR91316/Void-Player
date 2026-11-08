@@ -41,7 +41,7 @@
                         <TextBlock Text="AI Intelligence Hub"
                                    FontSize="28"
                                    FontWeight="Bold"
-                                   Foreground="#FFFFFF"/>
+                                   Foreground="#EDEEF0"/>
                     </StackPanel>
                     <TextBlock Text="Real-time acoustic analysis, listening persona, and mood curation"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -63,8 +63,8 @@
 
             <!-- 2. HERO LISTENING PERSONA CARD (Matches docs/screenshots/ai_hub.jpg) -->
             <Border Grid.Row="1"
-                    Background="#0D1612"
-                    BorderBrush="#1E3327"
+                    Background="#17191C"
+                    BorderBrush="#2A2D32"
                     BorderThickness="1"
                     CornerRadius="16"
                     Padding="28"
@@ -88,26 +88,26 @@
                                        FontWeight="Bold"
                                        Foreground="#FFB800"
                                        VerticalAlignment="Center"/>
-                            <Border Background="#1A2D23"
-                                    BorderBrush="#254A36"
+                            <Border Background="#2A2D32"
+                                    BorderBrush="#33373D"
                                     BorderThickness="1"
                                     CornerRadius="4"
                                     Padding="6,2,6,2">
                                 <TextBlock Text="{x:Bind SmlStatusBadgeText, Mode=OneWay}"
                                            FontSize="10"
                                            FontWeight="Bold"
-                                           Foreground="#00E676"/>
+                                           Foreground="#3CCF8E"/>
                             </Border>
                         </StackPanel>
 
                         <Border HorizontalAlignment="Right"
-                                Background="#1A241E"
+                                Background="#1F2226"
                                 CornerRadius="6"
                                 Padding="10,3,10,3">
                             <TextBlock Text="{x:Bind TotalPlaytimeBadgeText, Mode=OneWay}"
                                        FontSize="12"
                                        FontWeight="SemiBold"
-                                       Foreground="#8B9E94"/>
+                                       Foreground="#A9AEB5"/>
                         </Border>
                     </Grid>
 
@@ -141,7 +141,7 @@
                     <!-- Divider -->
                     <Border Grid.Row="2"
                             Height="1"
-                            Background="#16251D"
+                            Background="#1F2226"
                             Margin="0,0,0,20"/>
 
                     <!-- Mood Distribution Bars & AI Suggested EQ Pill -->
@@ -179,7 +179,7 @@
                                                    Text="{x:Bind MoodName}"
                                                    FontSize="13"
                                                    FontWeight="Medium"
-                                                   Foreground="#D1D5DB"
+                                                   Foreground="#C9CDD2"
                                                    VerticalAlignment="Center"/>
 
                                         <ProgressBar Grid.Column="1"
@@ -188,7 +188,7 @@
                                                      Height="8"
                                                      CornerRadius="4"
                                                      Foreground="{x:Bind ColorHex}"
-                                                     Background="#132019"
+                                                     Background="#1A1C20"
                                                      VerticalAlignment="Center"
                                                      Margin="12,0,16,0"/>
 
@@ -207,8 +207,8 @@
                         <!-- AI Suggested EQ Pill Button (matching screenshot) -->
                         <Button Grid.Row="2"
                                 Style="{StaticResource SubtleButtonStyle}"
-                                Background="#14211A"
-                                BorderBrush="#20382B"
+                                Background="#1A1C20"
+                                BorderBrush="#2A2D32"
                                 BorderThickness="1"
                                 CornerRadius="16"
                                 Padding="16,8,16,8"
@@ -226,8 +226,8 @@
 
             <!-- 3. AI DJ SMART FLOW BANNER (Matches docs/screenshots/ai_hub.jpg) -->
             <Border Grid.Row="2"
-                    Background="#0B130F"
-                    BorderBrush="#1A2920"
+                    Background="#131417"
+                    BorderBrush="#1F2226"
                     BorderThickness="1"
                     CornerRadius="12"
                     Padding="20"
@@ -244,7 +244,7 @@
                             Width="44"
                             Height="44"
                             CornerRadius="22"
-                            Background="#112219"
+                            Background="#1A1C20"
                             Margin="0,0,16,0"
                             VerticalAlignment="Center">
                         <FontIcon Glyph="&#xEA80;"
@@ -260,7 +260,7 @@
                         <TextBlock Text="AI DJ Smart Flow"
                                    FontSize="16"
                                    FontWeight="SemiBold"
-                                   Foreground="#FFFFFF"/>
+                                   Foreground="#EDEEF0"/>
                         <TextBlock Text="Tap to enable continuous AI smart track queue"
                                    FontSize="13"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -284,12 +284,12 @@
                     <TextBlock Text="AI Smart Categories"
                                FontSize="18"
                                FontWeight="Bold"
-                               Foreground="#FFFFFF"
+                               Foreground="#EDEEF0"
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 <Border HorizontalAlignment="Right"
-                        Background="#101D17"
-                        BorderBrush="#1E3327"
+                        Background="#17191C"
+                        BorderBrush="#2A2D32"
                         BorderThickness="1"
                         CornerRadius="12"
                         Padding="10,3,10,3">
@@ -343,7 +343,7 @@
                                             <TextBlock Text="{x:Bind SmlConfidenceText}"
                                                        FontSize="10"
                                                        FontWeight="Bold"
-                                                       Foreground="#A7F3D0"/>
+                                                       Foreground="#9FE3C1"/>
                                         </Border>
                                         <Border Background="#33000000"
                                                 CornerRadius="10"
@@ -400,8 +400,8 @@
 
             <Border Grid.Row="5"
                     Visibility="{x:Bind CategoryDetailsVisibility, Mode=OneWay}"
-                    Background="#0B130F"
-                    BorderBrush="#1E3327"
+                    Background="#131417"
+                    BorderBrush="#2A2D32"
                     BorderThickness="1"
                     CornerRadius="12"
                     Padding="20"

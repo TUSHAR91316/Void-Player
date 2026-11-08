@@ -1,15 +1,14 @@
 ﻿# R8 / ProGuard Rules for VoidPlayer
 
-# Keep Koin
--keep class org.koin.** { *; }
+# Media3 is not accessed by reflection; retain only MediaSessionService entry points.
+-keep class com.tushar.voidplayer.player.PlaybackService { *; }
 
-# Keep ExoPlayer
--keep class androidx.media3.** { *; }
--keep class com.google.android.exoplayer2.** { *; }
--dontwarn androidx.media3.**
+# Keep Android components and serializers used by platform APIs.
+-keep class com.tushar.voidplayer.VoidPlayerApp { *; }
 
-# Keep Compose
--keep class androidx.compose.** { *; }
-
-# Keep App Models for Reflection/Serialization (if needed)
--keep class com.tushar.voidplayer.model.** { *; }
+# jaudiotagger's optional desktop artwork conversion helpers reference AWT/ImageIO.
+# Android uses binaryData only; these classes are not present on Android and those
+# desktop-only helpers are not called by the app.
+-dontwarn java.awt.image.BufferedImage
+-dontwarn javax.imageio.ImageIO
+-dontwarn javax.imageio.stream.ImageInputStream

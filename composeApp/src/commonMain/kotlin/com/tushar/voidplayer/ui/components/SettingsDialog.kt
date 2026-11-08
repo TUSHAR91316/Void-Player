@@ -16,10 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tushar.voidplayer.player.AudioPlayer
+import com.tushar.voidplayer.ui.theme.*
 import com.tushar.voidplayer.ui.theme.PrimaryText
 import com.tushar.voidplayer.ui.theme.SurfaceElevated
 import com.tushar.voidplayer.ui.theme.SurfaceVariant
@@ -40,12 +44,26 @@ fun AudioSettingsScreen(
     val isNormalizationEnabled by player.isNormalizationEnabled.collectAsState()
     val bands by player.equalizerBands.collectAsState()
     val currentPreset by player.currentEqPreset.collectAsState()
+    val customPresets by player.customEqPresets.collectAsState()
     val bassBoostStrength by player.bassBoostStrength.collectAsState()
 
     var isCheckingUpdate by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<com.tushar.voidplayer.utils.UpdateInfo?>(null) }
     var updateStatusMessage by remember { mutableStateOf<String?>(null) }
+    var onlineLyricsEnabled by remember { mutableStateOf(false) }
+    var isFdroidBuild by remember { mutableStateOf(false) }
+    var showSaveEqPreset by remember { mutableStateOf(false) }
+    var showEqImportExport by remember { mutableStateOf(false) }
+    var eqPresetName by remember { mutableStateOf("") }
+    var editingEqPresetId by remember { mutableStateOf<String?>(null) }
+    var eqJson by remember { mutableStateOf("") }
+    var eqImportMode by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(repository) {
+        onlineLyricsEnabled = repository?.isOnlineLyricsEnabled() ?: false
+        isFdroidBuild = repository?.isFdroidBuild() ?: false
+    }
 
     // Full screen overlay
     Box(
@@ -64,15 +82,26 @@ fun AudioSettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "AUDIO SETTINGS",
-                    color = accentColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    text = "Settings",
+                    color = PrimaryText,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 22.sp
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = PrimaryText)
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close settings", tint = PrimaryText)
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            AppearanceSection(
+                selected = VoidTheme.mode,
+                accentColor = accentColor,
+                onSelect = { mode ->
+                    VoidTheme.mode = mode
+                    repository?.setUiTheme(mode.storageKey)
+                }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -311,6 +340,36 @@ fun AudioSettingsScreen(
 
             // Updates & App Info
             Surface(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                color = SurfaceElevated,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                            Text("Online lyrics", color = PrimaryText, fontWeight = FontWeight.SemiBold)
+                            Text("Allow optional LRCLIB searches", color = Color.Gray, fontSize = 12.sp)
+                        }
+                        Switch(
+                            checked = onlineLyricsEnabled,
+                            onCheckedChange = { enabled ->
+                                onlineLyricsEnabled = enabled
+                                scope.launch { repository?.setOnlineLyricsEnabled(enabled) }
+                            }
+                        )
+                    }
+                    if (onlineLyricsEnabled) {
+                        Text(
+                            "When you request lyrics, the track title and artist are sent to LRCLIB. No listening history is sent.",
+                            color = Color.Gray,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            }
+
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -325,12 +384,14 @@ fun AudioSettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                        Text("Void Player v2.3", color = PrimaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        val statusText = updateStatusMessage ?: "Tap to check for new releases on GitHub & F-Droid"
+                        Text("Void Player v${repository?.appVersionName().orEmpty()}", color = PrimaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        val statusText = updateStatusMessage ?: if (isFdroidBuild) "Updates are managed by your F-Droid client." else "Tap to check for new releases on GitHub."
                         Text(statusText, color = if (updateStatusMessage != null) accentColor else Color.Gray, fontSize = 12.sp)
                     }
 
-                    if (isCheckingUpdate) {
+                    if (isFdroidBuild) {
+                        Text("F-Droid", color = PrimaryText, fontSize = 12.sp)
+                    } else if (isCheckingUpdate) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = accentColor, strokeWidth = 2.dp)
                     } else {
                         Button(
@@ -345,7 +406,7 @@ fun AudioSettingsScreen(
                                                 updateInfo = info
                                                 updateStatusMessage = "Update available: v${info.latestVersion}"
                                             } else {
-                                                updateStatusMessage = "You're on the latest version (v2.3)"
+                                                updateStatusMessage = "You're on the latest version (v${info.currentVersion})"
                                             }
                                         } catch (e: Throwable) {
                                             updateStatusMessage = "Check failed: offline or connection error"
@@ -415,6 +476,35 @@ fun AudioSettingsScreen(
                         }
                     }
 
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { editingEqPresetId = null; eqPresetName = ""; showSaveEqPreset = true }, enabled = bands.isNotEmpty()) { Text("Save as preset") }
+                        TextButton(onClick = {
+                            eqJson = player.exportCustomEqPresets()
+                            eqImportMode = false
+                            showEqImportExport = true
+                        }) { Text("Export presets") }
+                        TextButton(onClick = {
+                            eqJson = ""
+                            eqImportMode = true
+                            showEqImportExport = true
+                        }) { Text("Import presets") }
+                    }
+                    if (customPresets.isNotEmpty()) {
+                        Text("CUSTOM PRESETS", color = PrimaryText, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                        customPresets.forEach { preset ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                FilterChip(
+                                    selected = currentPreset.equals(preset.name, ignoreCase = true),
+                                    onClick = { player.applyEqPreset(preset.name) },
+                                    label = { Text(preset.name) }
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                TextButton(onClick = { editingEqPresetId = preset.id; eqPresetName = preset.name; showSaveEqPreset = true }) { Text("Rename") }
+                                TextButton(onClick = { player.deleteCustomEqPreset(preset.id) }) { Text("Delete") }
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (bands.isEmpty()) {
@@ -471,6 +561,54 @@ fun AudioSettingsScreen(
         }
     }
 
+    if (showSaveEqPreset) {
+        AlertDialog(
+            onDismissRequest = { showSaveEqPreset = false },
+            title = { Text(if (editingEqPresetId == null) "Save equalizer preset" else "Rename equalizer preset") },
+            text = {
+                OutlinedTextField(
+                    value = eqPresetName,
+                    onValueChange = { eqPresetName = it.take(40) },
+                    label = { Text("Preset name") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val editingId = editingEqPresetId
+                    if (editingId == null) player.saveCustomEqPreset(eqPresetName)
+                    else player.renameCustomEqPreset(editingId, eqPresetName)
+                    eqPresetName = ""
+                    editingEqPresetId = null
+                    showSaveEqPreset = false
+                }) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { showSaveEqPreset = false }) { Text("Cancel") } }
+        )
+    }
+
+    if (showEqImportExport) {
+        AlertDialog(
+            onDismissRequest = { showEqImportExport = false },
+            title = { Text(if (eqImportMode) "Import equalizer presets" else "Export equalizer presets") },
+            text = {
+                OutlinedTextField(
+                    value = eqJson,
+                    onValueChange = { eqJson = it },
+                    label = { Text("JSON") },
+                    readOnly = !eqImportMode,
+                    minLines = 4
+                )
+            },
+            confirmButton = {
+                if (eqImportMode) TextButton(onClick = {
+                    if (player.importCustomEqPresets(eqJson)) showEqImportExport = false
+                }) { Text("Import") }
+            },
+            dismissButton = { TextButton(onClick = { showEqImportExport = false }) { Text("Close") } }
+        )
+    }
+
     if (showTerms) {
         AlertDialog(
             onDismissRequest = { showTerms = false },
@@ -497,5 +635,106 @@ fun AudioSettingsScreen(
             accentColor = accentColor,
             onDismiss = { updateInfo = null }
         )
+    }
+}
+
+/**
+ * Theme picker: Graphite (2.4 default) or Classic (the 2.3 look). The choice applies at once and
+ * is saved by the repository, so it survives restarts.
+ */
+@Composable
+private fun AppearanceSection(
+    selected: VoidThemeMode,
+    accentColor: Color,
+    onSelect: (VoidThemeMode) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text("Appearance", color = TertiaryText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ThemeChoiceCard(
+                title = "Graphite",
+                subtitle = "New · flat, calm",
+                preview = GraphitePalette,
+                selected = selected == VoidThemeMode.Graphite,
+                accentColor = accentColor,
+                onClick = { onSelect(VoidThemeMode.Graphite) },
+                modifier = Modifier.weight(1f)
+            )
+            ThemeChoiceCard(
+                title = "Classic",
+                subtitle = "Original 2.3 look",
+                preview = ClassicPalette,
+                selected = selected == VoidThemeMode.Classic,
+                accentColor = accentColor,
+                onClick = { onSelect(VoidThemeMode.Classic) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Text(
+            "Album artwork still sets the accent color in both themes. The change applies right away.",
+            color = SecondaryText,
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun ThemeChoiceCard(
+    title: String,
+    subtitle: String,
+    preview: VoidPalette,
+    selected: Boolean,
+    accentColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
+        color = SurfaceElevated,
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(2.dp, if (selected) accentColor else HairlineColor)
+    ) {
+        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Miniature of the theme: title bar, subtitle, play button and progress in its own colors.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(88.dp)
+                    .background(preview.background, RoundedCornerShape(8.dp))
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(Modifier.fillMaxWidth(0.6f).height(8.dp).background(preview.primaryText, RoundedCornerShape(4.dp)))
+                Box(Modifier.fillMaxWidth(0.4f).height(6.dp).background(preview.tertiaryText, RoundedCornerShape(3.dp)))
+                Spacer(Modifier.weight(1f))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val playColor = if (preview.flat) preview.primaryText else preview.defaultAccent
+                    Box(Modifier.size(18.dp).background(playColor, RoundedCornerShape(9.dp)))
+                    Box(Modifier.weight(1f).height(3.dp).background(preview.hairline, RoundedCornerShape(2.dp))) {
+                        Box(Modifier.fillMaxWidth(0.45f).fillMaxHeight().background(preview.defaultAccent))
+                    }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, color = PrimaryText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(subtitle, color = SecondaryText, fontSize = 12.sp)
+                }
+                RadioButton(
+                    selected = selected,
+                    onClick = null,
+                    colors = RadioButtonDefaults.colors(selectedColor = accentColor, unselectedColor = TertiaryText)
+                )
+            }
+        }
     }
 }

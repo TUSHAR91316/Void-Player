@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
@@ -38,17 +40,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tushar.voidplayer.data.SongRepository
 import com.tushar.voidplayer.model.Song
+import com.tushar.voidplayer.model.SongTagEdits
 import com.tushar.voidplayer.player.AudioPlayer
 import com.tushar.voidplayer.toImageBitmap
+import com.tushar.voidplayer.ui.theme.*
 import com.tushar.voidplayer.ui.theme.PrimaryText
 import com.tushar.voidplayer.ui.theme.SecondaryText
 import com.tushar.voidplayer.ui.theme.SurfaceBackground
 import com.tushar.voidplayer.ui.theme.SurfaceElevated
 import com.tushar.voidplayer.utils.AudioMetadataUtils
+import com.tushar.voidplayer.utils.CodecInfo
 import com.tushar.voidplayer.utils.LrcLine
 import com.tushar.voidplayer.utils.LrcParser
 import com.tushar.voidplayer.utils.SleepTimerManager
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +66,8 @@ fun NowPlayingScreen(
     accentColor: Color,
     onMinimize: () -> Unit,
     onOpenSettings: () -> Unit,
-    onToggleFavorite: ((Song) -> Unit)? = null
+    onToggleFavorite: ((Song) -> Unit)? = null,
+    onSongMetadataChanged: (Song) -> Unit = {}
 ) {
     val isPlaying by player.isPlaying.collectAsState()
     val isShuffle by player.isShuffle.collectAsState()
@@ -68,10 +76,18 @@ fun NowPlayingScreen(
     val currentQueue by player.currentQueue.collectAsState()
 
     val bitmap = com.tushar.voidplayer.utils.rememberSongImage(song, repository)
-    val codecInfo = remember(song) { AudioMetadataUtils.inspectSong(song) }
+    var codecInfo by remember(song.id) {
+        mutableStateOf(CodecInfo("Inspecting audio…", false, false, "Audio", "Inspecting…", "Inspecting…"))
+    }
+    LaunchedEffect(song.id) {
+        codecInfo = withContext(Dispatchers.IO) { AudioMetadataUtils.inspectSong(song) }
+    }
 
     var isFavorite by remember(song.id, song.isFavorite) { mutableStateOf(song.isFavorite) }
     var showCodecModal by remember { mutableStateOf(false) }
+    var showTagEditor by remember { mutableStateOf(false) }
+    var tagSaveMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     // 0 = Player/Artwork, 1 = Lyrics, 2 = Live Queue, 3 = Speed/Timer
     var selectedViewMode by remember { mutableStateOf(0) }
@@ -84,8 +100,8 @@ fun NowPlayingScreen(
             .fillMaxSize()
             .background(SurfaceBackground)
     ) {
-        // Dynamic immersive background gradient
-        Box(
+        // Classic: accent-tinted background wash. Graphite stays flat.
+        if (!VoidTheme.isFlat) Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
@@ -152,6 +168,13 @@ fun NowPlayingScreen(
                 }
 
                 IconButton(
+                    onClick = { showTagEditor = true },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(Icons.Filled.Edit, contentDescription = "Edit audio tags", tint = PrimaryText)
+                }
+
+                IconButton(
                     onClick = onOpenSettings,
                     modifier = Modifier.size(40.dp)
                 ) {
@@ -198,8 +221,8 @@ fun NowPlayingScreen(
                                 modifier = Modifier
                                     .fillMaxWidth(0.85f)
                                     .aspectRatio(1f)
-                                    .shadow(28.dp, RoundedCornerShape(32.dp), spotColor = accentColor.copy(alpha = 0.6f))
-                                    .clip(RoundedCornerShape(32.dp))
+                                    .shadow(if (VoidTheme.isFlat) 0.dp else 28.dp, RoundedCornerShape(32.dp), spotColor = accentColor.copy(alpha = 0.6f))
+                                    .clip(RoundedCornerShape(if (VoidTheme.isFlat) 12.dp else 32.dp))
                                     .background(SurfaceElevated),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -478,7 +501,114 @@ fun NowPlayingScreen(
             containerColor = SurfaceElevated
         )
     }
+
+    if (showTagEditor) {
+        EditSongTagsDialog(
+            song = song,
+            repository = repository,
+            onDismiss = { showTagEditor = false },
+            onSave = { edits ->
+                scope.launch {
+                    val saved = repository.updateSongTags(song, edits)
+                    if (saved) {
+                        val bpm = edits.bpm.toIntOrNull() ?: song.bpm
+                        val updated = song.copy(
+                            title = edits.title.trim().ifBlank { song.title },
+                            artist = edits.artist.trim().ifBlank { "Unknown Artist" },
+                            album = edits.album.trim().ifBlank { "Unknown Album" },
+                            genre = edits.genre,
+                            bpm = bpm,
+                            musicalKey = edits.musicalKey,
+                            acousticEnergy = com.tushar.voidplayer.utils.AiEngine.calculateAcousticEnergy(edits.genre, bpm, song.duration)
+                        )
+                        player.updateSongMetadata(updated)
+                        onSongMetadataChanged(updated)
+                    }
+                    tagSaveMessage = if (saved) "Tags saved." else "Write access was denied or unavailable for this audio file."
+                    showTagEditor = false
+                }
+            }
+        )
+    }
+    tagSaveMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { tagSaveMessage = null },
+            title = { Text("Audio tags", color = PrimaryText) },
+            text = { Text(message, color = SecondaryText) },
+            confirmButton = { TextButton(onClick = { tagSaveMessage = null }) { Text("OK") } },
+            containerColor = SurfaceElevated
+        )
+    }
 }
+
+@Composable
+private fun EditSongTagsDialog(song: Song, repository: SongRepository, onDismiss: () -> Unit, onSave: (SongTagEdits) -> Unit) {
+    var title by remember(song.id) { mutableStateOf(song.title) }
+    var artist by remember(song.id) { mutableStateOf(song.artist) }
+    var album by remember(song.id) { mutableStateOf(song.album) }
+    var year by remember(song.id) { mutableStateOf("") }
+    var genre by remember(song.id) { mutableStateOf(song.genre) }
+    var track by remember(song.id) { mutableStateOf("") }
+    var bpm by remember(song.id) { mutableStateOf(song.bpm.takeIf { it > 0 }?.toString() ?: "") }
+    var key by remember(song.id) { mutableStateOf(song.musicalKey) }
+    var lyrics by remember(song.id) { mutableStateOf("") }
+    // A blank field removes that tag on save, so every field must start from the file's
+    // current tags. Saving stays disabled until they are read.
+    var loadState by remember(song.id) { mutableStateOf(TagLoadState.Loading) }
+    LaunchedEffect(song.id) {
+        val current = try { repository.readSongTags(song) } catch (_: Throwable) { null }
+        if (current == null) {
+            loadState = TagLoadState.Unreadable
+            return@LaunchedEffect
+        }
+        title = current.title.ifBlank { song.title }
+        artist = current.artist.ifBlank { song.artist.takeUnless { it == "Unknown Artist" }.orEmpty() }
+        album = current.album.ifBlank { song.album.takeUnless { it == "Unknown Album" }.orEmpty() }
+        year = current.year
+        genre = current.genre.ifBlank { song.genre }
+        track = current.track
+        bpm = current.bpm.ifBlank { song.bpm.takeIf { it > 0 }?.toString().orEmpty() }
+        key = current.musicalKey.ifBlank { song.musicalKey }
+        lyrics = current.lyrics
+        loadState = TagLoadState.Ready
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit audio tags", color = PrimaryText) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                when (loadState) {
+                    TagLoadState.Loading -> Text("Reading current tags…", color = SecondaryText, fontSize = 13.sp)
+                    TagLoadState.Unreadable -> Text(
+                        "The tags in this file could not be read, so it cannot be edited here.",
+                        color = Color(0xFFFFB74D),
+                        fontSize = 13.sp
+                    )
+                    TagLoadState.Ready -> Unit
+                }
+                OutlinedTextField(title, { title = it }, label = { Text("Title") }, singleLine = true)
+                OutlinedTextField(artist, { artist = it }, label = { Text("Artist") }, singleLine = true)
+                OutlinedTextField(album, { album = it }, label = { Text("Album") }, singleLine = true)
+                OutlinedTextField(year, { year = it.filter(Char::isDigit).take(4) }, label = { Text("Year") }, singleLine = true)
+                OutlinedTextField(genre, { genre = it }, label = { Text("Genre") }, singleLine = true)
+                OutlinedTextField(track, { track = it.filter(Char::isDigit) }, label = { Text("Track number") }, singleLine = true)
+                OutlinedTextField(bpm, { bpm = it.filter(Char::isDigit) }, label = { Text("BPM") }, singleLine = true)
+                OutlinedTextField(key, { key = it }, label = { Text("Musical key") }, singleLine = true)
+                OutlinedTextField(lyrics, { lyrics = it }, label = { Text("Embedded lyrics") }, minLines = 3)
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = loadState == TagLoadState.Ready,
+                onClick = { onSave(SongTagEdits(title, artist, album, year, genre, track, bpm, key, lyrics)) }
+            ) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        containerColor = SurfaceElevated
+    )
+}
+
+private enum class TagLoadState { Loading, Ready, Unreadable }
 
 @Composable
 fun LyricsViewer(
@@ -492,13 +622,16 @@ fun LyricsViewer(
     var isLoading by remember { mutableStateOf(true) }
     var isFetchingOnline by remember { mutableStateOf(false) }
     var showManualSearchDialog by remember { mutableStateOf(false) }
+    var onlineLyricsEnabled by remember(song.id) { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(song.id) {
         isLoading = true
         statusMessage = null
-        rawLyrics = repository.loadLyrics(song) ?: repository.loadLyrics(song.uri)
+        onlineLyricsEnabled = repository.isOnlineLyricsEnabled()
+        // loadLyrics(song) already falls back to companion .lrc and embedded tags.
+        rawLyrics = repository.loadLyrics(song)
         parsedLyrics = rawLyrics?.let { LrcParser.parse(it) } ?: emptyList()
         isLoading = false
     }
@@ -558,20 +691,22 @@ fun LyricsViewer(
                         }
                     }
 
-                    IconButton(
-                        onClick = { showManualSearchDialog = true },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.5f))
-                    ) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = "Search Lyrics",
-                            tint = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(18.dp)
-                        )
+                    if (onlineLyricsEnabled) {
+                        IconButton(
+                            onClick = { showManualSearchDialog = true },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.5f))
+                        ) {
+                            Icon(
+                                Icons.Filled.Search,
+                                contentDescription = "Search Lyrics",
+                                tint = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -582,20 +717,22 @@ fun LyricsViewer(
                             Text(rawLyrics!!, color = PrimaryText, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                         }
                     }
-                    IconButton(
-                        onClick = { showManualSearchDialog = true },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.5f))
-                    ) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = "Search Lyrics",
-                            tint = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(18.dp)
-                        )
+                    if (onlineLyricsEnabled) {
+                        IconButton(
+                            onClick = { showManualSearchDialog = true },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.5f))
+                        ) {
+                            Icon(
+                                Icons.Filled.Search,
+                                contentDescription = "Search Lyrics",
+                                tint = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -606,8 +743,9 @@ fun LyricsViewer(
                     Text("No local .lrc lyrics found for this track", color = SecondaryText, textAlign = TextAlign.Center, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Button(
-                        onClick = {
+                    if (onlineLyricsEnabled) {
+                        Button(
+                            onClick = {
                             scope.launch {
                                 isFetchingOnline = true
                                 statusMessage = null
@@ -621,20 +759,23 @@ fun LyricsViewer(
                                 isFetchingOnline = false
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(Icons.Filled.CloudDownload, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Fetch Online Lyrics", color = Color.Black, fontWeight = FontWeight.Bold)
-                    }
+                            colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Icon(Icons.Filled.CloudDownload, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Fetch Online Lyrics", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    TextButton(onClick = { showManualSearchDialog = true }) {
-                        Icon(Icons.Filled.Search, contentDescription = null, tint = accentColor, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Search by Title / Artist", color = accentColor, fontSize = 13.sp)
+                        TextButton(onClick = { showManualSearchDialog = true }) {
+                            Icon(Icons.Filled.Search, contentDescription = null, tint = accentColor, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Search by Title / Artist", color = accentColor, fontSize = 13.sp)
+                        }
+                    } else {
+                        Text("Enable online lyrics in Settings to search LRCLIB.", color = SecondaryText, fontSize = 13.sp, textAlign = TextAlign.Center)
                     }
 
                     if (statusMessage != null) {
@@ -646,7 +787,7 @@ fun LyricsViewer(
         }
     }
 
-    if (showManualSearchDialog) {
+    if (showManualSearchDialog && onlineLyricsEnabled) {
         LyricsSearchDialog(
             initialQuery = "${song.title} ${song.artist}".replace("Unknown", "").trim(),
             repository = repository,
@@ -836,7 +977,7 @@ fun QueueViewer(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                items(queue, key = { it.id }) { song ->
+                itemsIndexed(queue, key = { _, song -> song.id }) { index, song ->
                     val isCurrent = song.id == currentSong.id
                     Surface(
                         modifier = Modifier
@@ -863,6 +1004,15 @@ fun QueueViewer(
                                 color = SecondaryText,
                                 fontSize = 11.sp
                             )
+                            IconButton(onClick = { if (index > 0) player.moveQueueItem(index, index - 1) }, enabled = index > 0) {
+                                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Move ${song.title} earlier", tint = SecondaryText)
+                            }
+                            IconButton(onClick = { if (index < queue.lastIndex) player.moveQueueItem(index, index + 1) }, enabled = index < queue.lastIndex) {
+                                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Move ${song.title} later", tint = SecondaryText)
+                            }
+                            IconButton(onClick = { player.removeFromQueue(song) }) {
+                                Icon(Icons.Filled.Close, contentDescription = "Remove ${song.title} from queue", tint = SecondaryText)
+                            }
                         }
                     }
                 }

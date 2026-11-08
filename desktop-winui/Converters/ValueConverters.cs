@@ -125,8 +125,8 @@ public class BoolToHeartGlyphConverter : IValueConverter
 
 public class BoolToHeartBrushConverter : IValueConverter
 {
-    private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush HeartActiveBrush = new(Windows.UI.Color.FromArgb(255, 244, 63, 94)); // Rose
-    private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush HeartInactiveBrush = new(Windows.UI.Color.FromArgb(100, 255, 255, 255)); // Muted
+    private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush HeartActiveBrush = new(Windows.UI.Color.FromArgb(255, 0xF2, 0x63, 0x7E)); // VoidFavoriteColor
+    private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush HeartInactiveBrush = new(Windows.UI.Color.FromArgb(255, 0x86, 0x8C, 0x94)); // VoidTextTertiaryColor (4.5:1+)
 
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -138,11 +138,30 @@ public class BoolToHeartBrushConverter : IValueConverter
 
 public class PlayingRowBackgroundConverter : IValueConverter
 {
-    private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush ActiveBrush = new(Windows.UI.Color.FromArgb(42, 0, 229, 117));
+    // Neutral raised surface for the playing row; the accent lives on the title and glyph only.
+    private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush ActiveBrush = new(Windows.UI.Color.FromArgb(255, 0x1A, 0x1C, 0x20));
     private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush InactiveBrush = new(Windows.UI.Color.FromArgb(0, 0, 0, 0));
 
     public object Convert(object? value, Type targetType, object parameter, string language)
         => value is true ? ActiveBrush : InactiveBrush;
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
+}
+
+/// <summary>Accent title for the playing row, primary text otherwise.</summary>
+public class PlayingTitleBrushConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object parameter, string language)
+        => Microsoft.UI.Xaml.Application.Current.Resources[value is true ? "VoidAccentBrush" : "VoidTextBrush"];
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
+}
+
+/// <summary>Shows the element only while the bound flag is true (used for the playing glyph).</summary>
+public class TrueToVisibleConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object parameter, string language)
+        => value is true ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotImplementedException();
 }

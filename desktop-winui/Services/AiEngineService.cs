@@ -381,7 +381,7 @@ public static class AiEngineService
             AverageAcousticEnergyPercent = energyPercent,
             AcousticEnergyLabel = energyLabel,
             TopGenresSummary = genreSummary,
-            SmlStatusBadge = "SML Neural Engine v2.3 Active"
+            SmlStatusBadge = "Tag-based estimates · no audio analysis"
         };
     }
 
@@ -520,22 +520,7 @@ public static class AiEngineService
     /// </summary>
     public static double ComputeFlowScore(SongItem a, SongItem b)
     {
-        // 1. Mood continuity
-        double moodScore = string.Equals(a.DominantMood, b.DominantMood, StringComparison.OrdinalIgnoreCase) ? 1.0 : 0.5;
-
-        // 2. Energy flow continuity (avoids violent energy spikes)
-        double energyDelta = Math.Abs(a.AcousticEnergy - b.AcousticEnergy);
-        double energyScore = Math.Max(0.0, 1.0 - (energyDelta * 1.5));
-
-        // 3. Tempo compatibility
-        double tempoScore = 0.7;
-        if (a.Bpm > 0 && b.Bpm > 0)
-        {
-            double bpmDelta = Math.Abs((double)a.Bpm - (double)b.Bpm);
-            tempoScore = Math.Max(0.0, 1.0 - (bpmDelta / 60.0));
-        }
-
-        return (moodScore * 0.45) + (energyScore * 0.35) + (tempoScore * 0.20);
+        return SmlV2.FlowScore(a, b);
     }
 
     /// <summary>

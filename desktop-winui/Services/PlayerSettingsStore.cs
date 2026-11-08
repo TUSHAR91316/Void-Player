@@ -17,8 +17,14 @@ public sealed class PlayerSettings
     public bool IsSmartFlowEnabled { get; set; } = true;
     public string EqualizerPreset { get; set; } = "Flat";
     public double[] EqualizerBands { get; set; } = [0, 0, 0, 0, 0];
+    public Dictionary<string, double[]> CustomEqPresets { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public SongSortOrder PreferredSortOrder { get; set; } = SongSortOrder.Title;
     public int DefaultSleepTimerMinutes { get; set; }
+    public bool OnlineLyricsEnabled { get; set; }
+    public Dictionary<string, SmlV2.ListeningStats> ListeningStats { get; set; } = new(StringComparer.Ordinal);
+    public List<string> LastQueueIds { get; set; } = [];
+    public string? LastCurrentSongId { get; set; }
+    public long LastPositionMs { get; set; }
 }
 
 public static class PlayerSettingsStore

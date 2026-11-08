@@ -1,10 +1,11 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml.Media.Imaging;
+using VoidPlayer.WinUI.Services;
 
 namespace VoidPlayer.WinUI.Models;
 
-public partial class SongItem : ObservableObject
+public partial class SongItem : ObservableObject, ITrackUserState, ISmlTrack
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Title { get; set; } = "Unknown Title";
@@ -15,26 +16,18 @@ public partial class SongItem : ObservableObject
     public string? ArtCachePath { get; set; }
     public BitmapImage? ArtCacheImageSource
     {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(ArtCachePath)) return null;
-            try
-            {
-                return System.IO.File.Exists(ArtCachePath) ? new BitmapImage(new Uri(ArtCachePath)) : null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
+        get => ArtworkImageCache.Get(ArtCachePath);
     }
     public uint Year { get; set; }
     public uint TrackNumber { get; set; }
     public DateTime DateAdded { get; set; } = DateTime.Now;
+    public long LastWriteTimeUtcTicks { get; set; }
+    public long FileSizeBytes { get; set; }
 
     // SML (Small Machine Learning) Audio Intelligence Properties
     public string Genre { get; set; } = string.Empty;
     public uint Bpm { get; set; }
+    public string InitialKey { get; set; } = string.Empty;
     public double AcousticEnergy { get; set; } = 0.5;
     public string DominantMood { get; set; } = "Eclectic";
 

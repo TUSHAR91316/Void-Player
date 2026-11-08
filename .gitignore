@@ -93,6 +93,14 @@ imaged/
 *.msi
 *.exe
 
+# Google Play Store assets & submissions (CRITICAL: Never commit to Git)
+/[Pp]lay [Ss]tore/
+[Pp]lay [Ss]tore/
+[Pp]laystore/
+scratch/
+
+
+
 # Legacy Flutter
 legacy_flutter/build/
 legacy_flutter/.vs/
@@ -103,3 +111,4 @@ chat.md
 agent.md
 ROADMAP.md
 F-Droid-Submission-Guide.md
+V2.4_IMPLEMENTATION_PLAN.md

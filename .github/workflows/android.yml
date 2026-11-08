@@ -1,0 +1,52 @@
+name: Android
+
+on:
+  push:
+    branches: [main, v2]
+    tags: ['V*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Build and test Android sources
+        run: ./gradlew :composeApp:assembleFdroidDebug :composeApp:assembleFullDebug :composeApp:testFdroidDebugUnitTest
+
+  # Mirrors what the F-Droid build server runs for `gradle: [fdroid]`, so a release that
+  # F-Droid cannot build or would reject is caught before a V* tag is pushed.
+  fdroid-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Assemble unsigned F-Droid release
+        run: ./gradlew :composeApp:assembleFdroidRelease
+      - name: Verify F-Droid package and version
+        run: |
+          set -euo pipefail
+          apk=$(ls composeApp/build/outputs/apk/fdroid/release/*.apk)
+          test "$(echo "$apk" | wc -l)" -eq 1 || { echo "Expected exactly one F-Droid APK, found: $apk"; exit 1; }
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
+          badging=$("$aapt2" dump badging "$apk" | head -1)
+          echo "$badging"
+          echo "$badging" | grep -q "name='com.tushar.voidplayer'" \
+            || { echo "F-Droid APK must keep package com.tushar.voidplayer"; exit 1; }
+          if [[ "${GITHUB_REF}" == refs/tags/V* ]]; then
+            version="${GITHUB_REF#refs/tags/V}"
+            echo "$badging" | grep -q "versionName='${version}'" \
+              || { echo "Tag V${version} does not match the APK versionName"; exit 1; }
+            test -f "fastlane/metadata/android/en-US/changelogs/$(echo "$badging" | sed -E "s/.*versionCode='([0-9]+)'.*/\1/").txt" \
+              || { echo "Missing fastlane changelog for this versionCode"; exit 1; }
+          fi

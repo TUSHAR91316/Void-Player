@@ -37,6 +37,7 @@ fun SongItem(
     accentColor: Color,
     onToggleFavorite: ((Song) -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
+    onAddToQueue: ((Song) -> Unit)? = null,
     onPlayNext: ((Song) -> Unit)? = null,
     onClick: () -> Unit
 ) {
@@ -130,6 +131,13 @@ fun SongItem(
                     onClick = {
                         expanded = false
                         onPlayNext?.invoke(song)
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Add to Queue") },
+                    onClick = {
+                        expanded = false
+                        onAddToQueue?.invoke(song)
                     }
                 )
                 DropdownMenuItem(

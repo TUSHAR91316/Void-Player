@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Globalization;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.UI;
 using Microsoft.UI.Dispatching;
@@ -24,6 +26,7 @@ public enum SongSortOrder
 
 public partial class MainViewModel : ObservableObject, IDisposable
 {
+    public string AppVersion => GetType().Assembly.GetName().Version?.ToString(3) ?? "";
     public AudioPlayerService Player { get; }
     public LibraryService Library { get; }
 
@@ -37,20 +40,26 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public partial bool IsNowPlayingExpanded { get; set; }
 
     [ObservableProperty]
+    public partial bool OnlineLyricsEnabled { get; set; }
+
+    [ObservableProperty]
     public partial double CurrentMemoryUsageMB { get; set; }
 
-    // Dynamic UI Theming based on current song
-    [ObservableProperty]
-    public partial Color DynamicAccentColor { get; set; } = Color.FromArgb(255, 0, 230, 118);
+    // Dynamic UI theming. Only the accent follows the current song's artwork; the "glow" and
+    // "border" brushes stay neutral graphite surfaces (see App.xaml tokens) so cards never tint.
+    private static readonly Color DefaultAccent = Color.FromArgb(255, 0x3C, 0xCF, 0x8E); // VoidAccentColor
 
     [ObservableProperty]
-    public partial SolidColorBrush DynamicAccentBrush { get; set; } = new(Color.FromArgb(255, 0, 230, 118));
+    public partial Color DynamicAccentColor { get; set; } = DefaultAccent;
 
     [ObservableProperty]
-    public partial SolidColorBrush DynamicGlowBrush { get; set; } = new(Color.FromArgb(60, 0, 230, 118));
+    public partial SolidColorBrush DynamicAccentBrush { get; set; } = new(DefaultAccent);
 
     [ObservableProperty]
-    public partial SolidColorBrush DynamicBorderBrush { get; set; } = new(Color.FromArgb(120, 0, 230, 118));
+    public partial SolidColorBrush DynamicGlowBrush { get; set; } = new(Color.FromArgb(255, 0x1F, 0x22, 0x26));
+
+    [ObservableProperty]
+    public partial SolidColorBrush DynamicBorderBrush { get; set; } = new(Color.FromArgb(255, 0x2A, 0x2D, 0x32));
 
     // Library Filtering & Favorites
     [ObservableProperty]
@@ -78,17 +87,36 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public partial bool IsSleepTimerActive { get; set; }
 
     private System.Threading.Timer? _sleepTimer;
+    private int _sleepTimerSecondsRemaining;
+    private double _sleepTimerStartVolume;
     private readonly DispatcherQueue? _dispatcherQueue;
+    private readonly DispatcherQueueTimer? _searchDebounceTimer;
+    private string _appliedSearchQuery = string.Empty;
     private SongItem? _activeSong;
+    private PlayerSettings? _startupSettings;
+    private bool _resumeRestored;
+    private DateTime _lastPositionSaveUtc = DateTime.MinValue;
 
     public MainViewModel()
     {
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+        _searchDebounceTimer = _dispatcherQueue?.CreateTimer();
+        if (_searchDebounceTimer != null)
+        {
+            _searchDebounceTimer.Interval = TimeSpan.FromMilliseconds(150);
+            _searchDebounceTimer.IsRepeating = false;
+            _searchDebounceTimer.Tick += (_, _) =>
+            {
+                _appliedSearchQuery = SearchQuery;
+                UpdateFilteredSongs();
+            };
+        }
         Player = new AudioPlayerService();
         Library = new LibraryService();
 
         // 1. Load persisted settings
         var settings = PlayerSettingsStore.Load();
+        _startupSettings = settings;
         Player.PlaybackRate = settings.PlaybackRate;
         Player.Volume = settings.Volume;
         Player.IsMuted = settings.IsMuted;
@@ -98,8 +126,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Player.IsSmartFlowEnabled = settings.IsSmartFlowEnabled;
         Player.EqualizerPreset = settings.EqualizerPreset;
         Player.SetEqualizerBands(settings.EqualizerBands, settings.EqualizerPreset);
+        Player.LoadCustomEqPresets(settings.CustomEqPresets);
+        Player.LoadListeningStats(settings.ListeningStats);
 
         CurrentSort = settings.PreferredSortOrder;
+        OnlineLyricsEnabled = settings.OnlineLyricsEnabled;
         IsSmartFlowActive = settings.IsSmartFlowEnabled;
 
         Library.Songs.CollectionChanged += (_, _) =>
@@ -128,11 +159,22 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 }
 
                 _ = UpdateSongColorAsync(Player.CurrentSong);
+                SaveSettings();
+            }
+            else if (e.PropertyName == nameof(Player.CurrentPosition))
+            {
+                var now = DateTime.UtcNow;
+                if (now - _lastPositionSaveUtc >= TimeSpan.FromSeconds(10))
+                {
+                    _lastPositionSaveUtc = now;
+                    SaveSettings();
+                }
             }
             else if (e.PropertyName is nameof(Player.PlaybackRate)
                 or nameof(Player.Volume)
                 or nameof(Player.IsMuted)
                 or nameof(Player.IsShuffle)
+                or nameof(Player.IsPlaying)
                 or nameof(Player.RepeatMode)
                 or nameof(Player.IsNormalizationEnabled)
                 or nameof(Player.EqualizerPreset)
@@ -141,10 +183,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 SaveSettings();
             }
         };
+        Player.Queue.CollectionChanged += (_, _) => SaveSettings();
 
         UpdateFilteredSongs();
         RefreshAiHub();
         UpdateMemoryStats();
+        TryRestorePlayback();
     }
 
     private void OnLibraryScanCompleted(object? sender, EventArgs e)
@@ -154,6 +198,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(FavoritesCount));
         OnPropertyChanged(nameof(TotalSongsCount));
         UpdateMemoryStats();
+        TryRestorePlayback();
+    }
+
+    private void TryRestorePlayback()
+    {
+        if (_resumeRestored || _startupSettings == null || _startupSettings.LastQueueIds.Count == 0 || Library.Songs.Count == 0) return;
+        var byId = Library.Songs.ToDictionary(song => song.Id, StringComparer.Ordinal);
+        var queue = _startupSettings.LastQueueIds
+            .Select(id => byId.TryGetValue(id, out var song) ? song : null)
+            .Where(song => song != null)
+            .Cast<SongItem>()
+            .ToArray();
+        if (queue.Length == 0) return;
+        Player.RestorePlayback(queue, _startupSettings.LastCurrentSongId, _startupSettings.LastPositionMs);
+        _resumeRestored = true;
     }
 
     private async Task UpdateSongColorAsync(SongItem? song)
@@ -163,26 +222,43 @@ public partial class MainViewModel : ObservableObject, IDisposable
             Color color;
             if (song == null)
             {
-                color = Color.FromArgb(255, 0, 230, 118); // Default Neon Emerald
+                color = DefaultAccent;
             }
             else
             {
                 var fallbackKey = $"{song.Artist} {song.Album} {song.Title}";
-                color = await ColorExtractorService.ExtractDominantColorAsync(song.ArtCachePath, fallbackKey);
+                color = EnsureReadableOnGround(await ColorExtractorService.ExtractDominantColorAsync(song.ArtCachePath, fallbackKey));
             }
 
             DynamicAccentColor = color;
             DynamicAccentBrush = new SolidColorBrush(color);
-            DynamicGlowBrush = new SolidColorBrush(Color.FromArgb(60, color.R, color.G, color.B));
-            DynamicBorderBrush = new SolidColorBrush(Color.FromArgb(140, color.R, color.G, color.B));
         }
         catch { }
     }
 
+    /// <summary>
+    /// Album colors are often dark. The accent is used for text and slider fills on the graphite
+    /// ground, so lighten it until it reaches 4.5:1 contrast (see Services/AccentContrast).
+    /// </summary>
+    internal static Color EnsureReadableOnGround(Color color)
+    {
+        var (r, g, b) = Services.AccentContrast.EnsureReadableOnGround((color.R, color.G, color.B));
+        return Color.FromArgb(255, r, g, b);
+    }
+
     partial void OnSearchQueryChanged(string value)
     {
-        UpdateFilteredSongs();
+        if (_searchDebounceTimer == null)
+        {
+            _appliedSearchQuery = value;
+            UpdateFilteredSongs();
+            return;
+        }
+        _searchDebounceTimer.Stop();
+        _searchDebounceTimer.Start();
     }
+
+    partial void OnOnlineLyricsEnabledChanged(bool value) => SaveSettings();
 
     [ObservableProperty]
     public partial SongSortOrder CurrentSort { get; set; } = SongSortOrder.Title;
@@ -209,7 +285,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         FilteredSongs.Clear();
 
-        string query = SearchQuery?.Trim() ?? string.Empty;
+        string query = FoldSearch(_appliedSearchQuery.Trim());
 
         var matches = Library.Songs.AsEnumerable();
 
@@ -221,9 +297,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         if (!string.IsNullOrWhiteSpace(query))
         {
             matches = matches.Where(s =>
-                s.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                s.Artist.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                s.Album.Contains(query, StringComparison.OrdinalIgnoreCase));
+                FoldSearch(s.Title).Contains(query, StringComparison.Ordinal) ||
+                FoldSearch(s.Artist).Contains(query, StringComparison.Ordinal) ||
+                FoldSearch(s.Album).Contains(query, StringComparison.Ordinal));
         }
 
         matches = CurrentSort switch
@@ -245,6 +321,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private static bool IsSameTrack(SongItem left, SongItem? right)
         => right != null && string.Equals(left.FilePath, right.FilePath, StringComparison.OrdinalIgnoreCase);
+
+    private static string FoldSearch(string value) => new string(value.Normalize(NormalizationForm.FormD)
+        .Where(character => CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+        .ToArray()).Normalize(NormalizationForm.FormC);
 
     [RelayCommand]
     public void SetFilterAll()
@@ -358,31 +438,40 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         _sleepTimer?.Dispose();
         _sleepTimer = null;
+        Player.SetVolume(_sleepTimerStartVolume > 0 ? _sleepTimerStartVolume : Player.Volume);
 
         if (minutes <= 0)
         {
             IsSleepTimerActive = false;
+            _sleepTimerSecondsRemaining = 0;
             SleepTimerMinutesRemaining = 0;
             SaveSettings();
             return;
         }
 
+        _sleepTimerStartVolume = Player.Volume;
+        _sleepTimerSecondsRemaining = checked(minutes * 60);
         SleepTimerMinutesRemaining = minutes;
         IsSleepTimerActive = true;
         SaveSettings();
 
-        _sleepTimer = new System.Threading.Timer(OnSleepTimerTick, null, 60000, 60000);
+        _sleepTimer = new System.Threading.Timer(OnSleepTimerTick, null, 1000, 1000);
     }
 
     private void OnSleepTimerTick(object? state)
     {
         _dispatcherQueue?.TryEnqueue(() =>
         {
-            if (SleepTimerMinutesRemaining > 1)
+            if (!IsSleepTimerActive || _sleepTimerSecondsRemaining <= 0) return;
+
+            _sleepTimerSecondsRemaining--;
+            SleepTimerMinutesRemaining = (int)Math.Ceiling(_sleepTimerSecondsRemaining / 60d);
+            if (_sleepTimerSecondsRemaining <= 20)
             {
-                SleepTimerMinutesRemaining--;
+                Player.SetVolume(_sleepTimerStartVolume * (_sleepTimerSecondsRemaining / 20d));
             }
-            else
+
+            if (_sleepTimerSecondsRemaining == 0)
             {
                 SleepTimerMinutesRemaining = 0;
                 IsSleepTimerActive = false;
@@ -393,6 +482,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 {
                     Player.TogglePlayPause();
                 }
+                Player.SetVolume(_sleepTimerStartVolume);
             }
         });
     }
@@ -401,6 +491,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public async Task ScanLibraryAsync()
     {
         await Library.ScanAllFoldersAsync();
+    }
+
+    public async Task PlayExternalFilesAsync(IEnumerable<string> filePaths)
+    {
+        var songs = await Library.ImportAudioFilesAsync(filePaths);
+        if (songs.Count == 0) return;
+        Player.SetQueue(songs, songs[0]);
+        Player.PlayCurrentIndex();
+        UpdateFilteredSongs();
+        RefreshAiHub();
     }
 
     [RelayCommand]
@@ -428,8 +528,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
             IsSmartFlowEnabled = IsSmartFlowActive,
             EqualizerPreset = Player.EqualizerPreset,
             EqualizerBands = Player.EqualizerBands,
+            CustomEqPresets = Player.CustomEqPresets,
             PreferredSortOrder = CurrentSort,
-            DefaultSleepTimerMinutes = IsSleepTimerActive ? SleepTimerMinutesRemaining : 0
+            DefaultSleepTimerMinutes = IsSleepTimerActive ? SleepTimerMinutesRemaining : 0,
+            OnlineLyricsEnabled = OnlineLyricsEnabled,
+            ListeningStats = Player.ListeningStats,
+            LastQueueIds = Player.Queue.Select(song => song.Id).ToList(),
+            LastCurrentSongId = Player.CurrentSong?.Id,
+            LastPositionMs = (long)Math.Max(0, Player.CurrentPosition.TotalMilliseconds)
         };
         PlayerSettingsStore.SaveDebounced(settings);
     }
@@ -447,8 +553,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
             IsSmartFlowEnabled = IsSmartFlowActive,
             EqualizerPreset = Player.EqualizerPreset,
             EqualizerBands = Player.EqualizerBands,
+            CustomEqPresets = Player.CustomEqPresets,
             PreferredSortOrder = CurrentSort,
-            DefaultSleepTimerMinutes = IsSleepTimerActive ? SleepTimerMinutesRemaining : 0
+            DefaultSleepTimerMinutes = IsSleepTimerActive ? SleepTimerMinutesRemaining : 0,
+            OnlineLyricsEnabled = OnlineLyricsEnabled,
+            ListeningStats = Player.ListeningStats,
+            LastQueueIds = Player.Queue.Select(song => song.Id).ToList(),
+            LastCurrentSongId = Player.CurrentSong?.Id,
+            LastPositionMs = (long)Math.Max(0, Player.CurrentPosition.TotalMilliseconds)
         };
         PlayerSettingsStore.SaveImmediate(settings);
     }

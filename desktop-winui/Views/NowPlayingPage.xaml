@@ -19,7 +19,7 @@
         <converters:VolumeToIconConverter x:Key="VolumeToIconConverter"/>
     </Page.Resources>
 
-    <Grid Background="#070C0A"
+    <Grid Background="#0F1012"
           Padding="32,20,32,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -44,7 +44,7 @@
                 <TextBlock Text="Now Playing"
                            FontSize="18"
                            FontWeight="SemiBold"
-                           Foreground="#FFFFFF"
+                           Foreground="#EDEEF0"
                            VerticalAlignment="Center"/>
             </StackPanel>
 
@@ -54,24 +54,14 @@
                         Spacing="12"
                         VerticalAlignment="Center">
                 <!-- Dynamic Hi-Res Codec Badge -->
-                <Border Background="{x:Bind ViewModel.DynamicGlowBrush, Mode=OneWay}"
-                        BorderBrush="{x:Bind ViewModel.DynamicBorderBrush, Mode=OneWay}"
+                <Border BorderBrush="#2A2D32"
                         BorderThickness="1"
-                        CornerRadius="14"
-                        Padding="12,5,12,5">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="6"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="{x:Bind ViewModel.Player.CurrentSong.CodecBadge, Mode=OneWay, FallbackValue='FLAC Hi-Res'}"
-                                   FontSize="11"
-                                   FontWeight="Bold"
-                                   Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="ⓘ"
-                                   FontSize="11"
-                                   Foreground="{x:Bind ViewModel.DynamicAccentBrush, Mode=OneWay}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
+                        CornerRadius="6"
+                        Padding="12,6,12,6">
+                    <TextBlock Text="{x:Bind ViewModel.Player.CurrentSong.CodecBadge, Mode=OneWay, FallbackValue=''}"
+                               FontSize="12"
+                               Foreground="#EDEEF0"
+                               VerticalAlignment="Center"/>
                 </Border>
             </StackPanel>
         </Grid>
@@ -96,21 +86,13 @@
                     <Grid Width="340"
                           Height="340"
                           HorizontalAlignment="Center">
-                        <!-- Dynamic Ambient Glow halo -->
+                        <!-- Artwork Container: flat, hairline edge, no glow halo -->
                         <Border Width="340"
                                 Height="340"
-                                CornerRadius="170"
-                                Background="{x:Bind ViewModel.DynamicGlowBrush, Mode=OneWay}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"/>
-
-                        <!-- Artwork Container -->
-                        <Border Width="310"
-                                Height="310"
-                                CornerRadius="16"
-                                Background="#0E1713"
-                                BorderBrush="{x:Bind ViewModel.DynamicBorderBrush, Mode=OneWay}"
-                                BorderThickness="2"
+                                CornerRadius="8"
+                                Background="#17191C"
+                                BorderBrush="#2A2D32"
+                                BorderThickness="1"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
                             <Grid>
@@ -129,7 +111,7 @@
 
                                 <!-- Acoustic Waveform Visualizer (AM Waveform design matching screenshot) -->
                                 <Grid Visibility="{x:Bind LyricsVisibility, Mode=OneWay}"
-                                      Background="#0A120E"
+                                      Background="#131417"
                                       Padding="20">
                                     <StackPanel VerticalAlignment="Center"
                                                 HorizontalAlignment="Center"
@@ -141,19 +123,19 @@
                                                     Spacing="4">
                                             <Border Width="3"
                                                     Height="24"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="42"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="68"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="96"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="130"
@@ -169,15 +151,15 @@
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="80"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="50"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="70"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="110"
@@ -193,15 +175,15 @@
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="75"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="40"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                             <Border Width="3"
                                                     Height="20"
-                                                    Background="#FFFFFF"
+                                                    Background="#EDEEF0"
                                                     CornerRadius="1"/>
                                         </StackPanel>
                                         <TextBlock Text="Acoustic Waveform Active"
@@ -224,7 +206,7 @@
                             <TextBlock Text="{x:Bind ViewModel.Player.CurrentSong.Title, Mode=OneWay, FallbackValue='No Track Selected'}"
                                        FontSize="22"
                                        FontWeight="Bold"
-                                       Foreground="#FFFFFF"
+                                       Foreground="#EDEEF0"
                                        TextAlignment="Center"
                                        TextWrapping="Wrap"/>
                             <TextBlock Text="{x:Bind ViewModel.Player.CurrentSong.Artist, Mode=OneWay, FallbackValue='Unknown Artist'}"
@@ -337,67 +319,67 @@
                     </StackPanel>
 
                     <!-- BOTTOM TABS: Cover | Lyrics | Queue | Speed & Specs -->
-                    <Border Background="#0C1410"
-                            BorderBrush="#1A2B21"
+                    <Border Background="#131417"
+                            BorderBrush="#2A2D32"
                             BorderThickness="1"
-                            CornerRadius="20"
-                            Padding="4"
+                            CornerRadius="8"
+                            Padding="3"
                             HorizontalAlignment="Center"
                             Margin="0,4,0,0">
                         <StackPanel Orientation="Horizontal"
                                     Spacing="4">
                             <Button Style="{StaticResource SubtleButtonStyle}"
                                     Background="{x:Bind CoverPillBg, Mode=OneWay}"
-                                    CornerRadius="16"
-                                    Padding="12,5,12,5"
+                                    CornerRadius="6"
+                                    Padding="14,6,14,6"
                                     Click="OnCoverTabClick">
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="6">
                                     <TextBlock Text="Cover"
                                                FontSize="12"
-                                               FontWeight="SemiBold"
+                                               FontWeight="Normal"
                                                Foreground="{x:Bind CoverPillFg, Mode=OneWay}"/>
                                 </StackPanel>
                             </Button>
 
                             <Button Style="{StaticResource SubtleButtonStyle}"
                                     Background="{x:Bind LyricsPillBg, Mode=OneWay}"
-                                    CornerRadius="16"
-                                    Padding="12,5,12,5"
+                                    CornerRadius="6"
+                                    Padding="14,6,14,6"
                                     Click="OnLyricsTabClick">
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="6">
                                     <TextBlock Text="Lyrics"
                                                FontSize="12"
-                                               FontWeight="SemiBold"
+                                               FontWeight="Normal"
                                                Foreground="{x:Bind LyricsPillFg, Mode=OneWay}"/>
                                 </StackPanel>
                             </Button>
 
                             <Button Style="{StaticResource SubtleButtonStyle}"
                                     Background="{x:Bind QueuePillBg, Mode=OneWay}"
-                                    CornerRadius="16"
-                                    Padding="12,5,12,5"
+                                    CornerRadius="6"
+                                    Padding="14,6,14,6"
                                     Click="OnQueueTabClick">
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="6">
                                     <TextBlock Text="Queue"
                                                FontSize="12"
-                                               FontWeight="SemiBold"
+                                               FontWeight="Normal"
                                                Foreground="{x:Bind QueuePillFg, Mode=OneWay}"/>
                                 </StackPanel>
                             </Button>
 
                             <Button Style="{StaticResource SubtleButtonStyle}"
                                     Background="{x:Bind SpecsPillBg, Mode=OneWay}"
-                                    CornerRadius="16"
-                                    Padding="12,5,12,5"
+                                    CornerRadius="6"
+                                    Padding="14,6,14,6"
                                     Click="OnSpecsTabClick">
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="6">
                                     <TextBlock Text="Speed &amp; Specs"
                                                FontSize="12"
-                                               FontWeight="SemiBold"
+                                               FontWeight="Normal"
                                                Foreground="{x:Bind SpecsPillFg, Mode=OneWay}"/>
                                 </StackPanel>
                             </Button>
@@ -416,8 +398,8 @@
                     <StackPanel Spacing="16"
                                 Visibility="{x:Bind CoverVisibility, Mode=OneWay}">
                         <!-- Audio Codec Card Header -->
-                        <Border Background="#0C1410"
-                                BorderBrush="#1A2B21"
+                        <Border Background="#131417"
+                                BorderBrush="#2A2D32"
                                 BorderThickness="1"
                                 CornerRadius="12"
                                 Padding="18">
@@ -432,7 +414,7 @@
                                         <TextBlock Text="Audio Codec &amp; Stream Info"
                                                    FontSize="15"
                                                    FontWeight="SemiBold"
-                                                   Foreground="#FFFFFF"
+                                                   Foreground="#EDEEF0"
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <Border HorizontalAlignment="Right"
@@ -449,7 +431,7 @@
                                 </Grid>
 
                                 <Border Height="1"
-                                        Background="#16251D"/>
+                                        Background="#1F2226"/>
 
                                 <!-- Codec Properties Grid -->
                                 <Grid RowSpacing="10"
@@ -537,8 +519,8 @@
                         </Border>
 
                         <!-- Up Next Preview Card -->
-                        <Border Background="#0C1410"
-                                BorderBrush="#1A2B21"
+                        <Border Background="#131417"
+                                BorderBrush="#2A2D32"
                                 BorderThickness="1"
                                 CornerRadius="12"
                                 Padding="18">
@@ -547,7 +529,7 @@
                                     <TextBlock Text="Up Next"
                                                FontSize="15"
                                                FontWeight="SemiBold"
-                                               Foreground="#FFFFFF"/>
+                                               Foreground="#EDEEF0"/>
                                     <Button HorizontalAlignment="Right"
                                             Style="{StaticResource SubtleButtonStyle}"
                                             Click="OnQueueTabClick">
@@ -590,8 +572,8 @@
                     </StackPanel>
 
                     <!-- PANEL 2: LYRICS MODE (Live Acoustic Lyrics Sheet) -->
-                    <Border Background="#0C1410"
-                            BorderBrush="#1A2B21"
+                    <Border Background="#131417"
+                            BorderBrush="#2A2D32"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="24"
@@ -607,21 +589,21 @@
                                     <TextBlock Text="Lyrics"
                                                FontSize="16"
                                                FontWeight="SemiBold"
-                                               Foreground="#FFFFFF"/>
+                                               Foreground="#EDEEF0"/>
                                 </StackPanel>
                                 <Border HorizontalAlignment="Right"
-                                        Background="#112219"
+                                        Background="#1A1C20"
                                         CornerRadius="4"
                                         Padding="8,2,8,2">
                                     <TextBlock Text="{x:Bind LyricsStatusText, Mode=OneWay}"
                                                FontSize="11"
                                                FontWeight="Bold"
-                                               Foreground="#00E575"/>
+                                               Foreground="#3CCF8E"/>
                                 </Border>
                             </Grid>
 
                             <Border Height="1"
-                                    Background="#16251D"/>
+                                    Background="#1F2226"/>
 
                             <ScrollViewer MaxHeight="360"
                                           HorizontalScrollBarVisibility="Disabled"
@@ -637,8 +619,8 @@
                     </Border>
 
                     <!-- PANEL 3: QUEUE MODE (Full Interactive Queue) -->
-                    <Border Background="#0C1410"
-                            BorderBrush="#1A2B21"
+                    <Border Background="#131417"
+                            BorderBrush="#2A2D32"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="20"
@@ -654,17 +636,26 @@
                                     <TextBlock Text="Now Playing Queue"
                                                FontSize="16"
                                                FontWeight="SemiBold"
-                                               Foreground="#FFFFFF"/>
+                                               Foreground="#EDEEF0"/>
                                 </StackPanel>
-                                <TextBlock HorizontalAlignment="Right"
-                                           Text="{x:Bind QueueCountText, Mode=OneWay}"
-                                           FontSize="12"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="6">
+                                    <TextBlock Text="{x:Bind QueueCountText, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <Button Style="{StaticResource SubtleButtonStyle}" Padding="6" Click="OnImportM3uClick"
+                                            ToolTipService.ToolTip="Import M3U/M3U8 into the queue">
+                                        <FontIcon Glyph="&#xE8B5;" FontSize="13"/>
+                                    </Button>
+                                    <Button Style="{StaticResource SubtleButtonStyle}" Padding="6" Click="OnExportM3uClick"
+                                            ToolTipService.ToolTip="Export queue as M3U8">
+                                        <FontIcon Glyph="&#xE74E;" FontSize="13"/>
+                                    </Button>
+                                </StackPanel>
                             </Grid>
 
                             <Border Height="1"
-                                    Background="#16251D"/>
+                                    Background="#1F2226"/>
 
                             <ListView ItemsSource="{x:Bind ViewModel.Player.Queue, Mode=OneWay}"
                                       MaxHeight="450"
@@ -728,8 +719,8 @@
                     <StackPanel Spacing="16"
                                 Visibility="{x:Bind SpecsVisibility, Mode=OneWay}">
                         <!-- Playback Speed Card -->
-                        <Border Background="#0C1410"
-                                BorderBrush="#1A2B21"
+                        <Border Background="#131417"
+                                BorderBrush="#2A2D32"
                                 BorderThickness="1"
                                 CornerRadius="12"
                                 Padding="18">
@@ -743,7 +734,7 @@
                                     <TextBlock Text="Playback Speed"
                                                FontSize="15"
                                                FontWeight="SemiBold"
-                                               Foreground="#FFFFFF"
+                                               Foreground="#EDEEF0"
                                                VerticalAlignment="Center"/>
                                 </StackPanel>
 
@@ -800,8 +791,8 @@
                         </Border>
 
                         <!-- Hardware Audio Pipeline Specs Card -->
-                        <Border Background="#0C1410"
-                                BorderBrush="#1A2B21"
+                        <Border Background="#131417"
+                                BorderBrush="#2A2D32"
                                 BorderThickness="1"
                                 CornerRadius="12"
                                 Padding="18">
@@ -815,12 +806,12 @@
                                     <TextBlock Text="Hardware Audio Pipeline"
                                                FontSize="15"
                                                FontWeight="SemiBold"
-                                               Foreground="#FFFFFF"
+                                               Foreground="#EDEEF0"
                                                VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <Border Height="1"
-                                        Background="#16251D"/>
+                                        Background="#1F2226"/>
 
                                 <Grid RowSpacing="10"
                                       ColumnSpacing="16">
@@ -845,7 +836,7 @@
                                                Text="{x:Bind ViewModel.Player.AudioPipelineStatus, Mode=OneWay}"
                                                FontWeight="SemiBold"
                                                FontSize="12"
-                                               Foreground="#00E575"/>
+                                               Foreground="#3CCF8E"/>
 
                                     <TextBlock Grid.Row="1"
                                                Grid.Column="0"

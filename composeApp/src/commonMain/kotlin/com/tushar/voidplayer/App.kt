@@ -28,8 +28,10 @@ import com.tushar.voidplayer.ui.theme.*
 import com.tushar.voidplayer.ui.components.*
 import com.tushar.voidplayer.utils.AiCategorizer
 import com.tushar.voidplayer.utils.AiEngine
+import com.tushar.voidplayer.utils.M3uPlaylistCodec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 // ------------------------------------------------------------------
@@ -42,20 +44,32 @@ enum class SortOrder(val label: String) {
     DURATION("Duration")
 }
 
+data class M3uImportData(val name: String, val contents: String)
+
 @Composable
 fun App(
     repository: SongRepository,
     player: AudioPlayer,
     pickedFolderUri: State<String?> = mutableStateOf(null),
     statusMessage: String = "",
-    onPickFolder: () -> Unit = {}
+    libraryPermissionGranted: State<Boolean> = mutableStateOf(true),
+    onPickFolder: () -> Unit = {},
+    onPickM3uImport: () -> Unit = {},
+    onExportM3uFile: (String, String) -> Unit = { _, _ -> },
+    importedM3u: State<M3uImportData?> = mutableStateOf(null),
+    onConsumeM3uImport: () -> Unit = {}
 ) {
     PlatformApp(
         repository = repository,
         player = player,
         pickedFolderUri = pickedFolderUri,
         statusMessage = statusMessage,
-        onPickFolder = onPickFolder
+        libraryPermissionGranted = libraryPermissionGranted,
+        onPickFolder = onPickFolder,
+        onPickM3uImport = onPickM3uImport,
+        onExportM3uFile = onExportM3uFile,
+        importedM3u = importedM3u,
+        onConsumeM3uImport = onConsumeM3uImport
     )
 }
 
@@ -65,12 +79,22 @@ fun MobileApp(
     player: AudioPlayer,
     pickedFolderUri: State<String?> = mutableStateOf(null),
     statusMessage: String = "",
-    onPickFolder: () -> Unit = {}
+    libraryPermissionGranted: State<Boolean> = mutableStateOf(true),
+    onPickFolder: () -> Unit = {},
+    onPickM3uImport: () -> Unit = {},
+    onExportM3uFile: (String, String) -> Unit = { _, _ -> },
+    importedM3u: State<M3uImportData?> = mutableStateOf(null),
+    onConsumeM3uImport: () -> Unit = {}
 ) {
     val currentSong by player.currentSong.collectAsState()
 
     // Dynamic theme accent color
     var accentColor by remember { mutableStateOf(DefaultAccent) }
+    val themeMode = VoidTheme.mode
+    LaunchedEffect(themeMode) {
+        // Switching themes swaps the default accent; album colors are re-applied when they load.
+        if (currentSong == null) accentColor = DefaultAccent
+    }
     var currentArt by remember { mutableStateOf<ByteArray?>(null) }
 
     // Step 1: when the song changes, load its art bytes
@@ -103,25 +127,31 @@ fun MobileApp(
         }
     }
 
-    MaterialTheme(colorScheme = ModernScheme.copy(primary = accentColor)) {
+    // Graphite keeps dark album colors readable on its background; Classic uses them as is.
+    val displayAccent = VoidTheme.readableAccent(accentColor)
+
+    MaterialTheme(colorScheme = ModernScheme.copy(primary = displayAccent)) {
         Box(modifier = Modifier.fillMaxSize().background(SurfaceBackground)) {
-            // Animated background gradient
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(accentColor.copy(alpha = 0.15f), SurfaceBackground)
+            // Classic keeps its accent-tinted background wash; Graphite stays flat.
+            if (!VoidTheme.isFlat) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(displayAccent.copy(alpha = 0.15f), SurfaceBackground)
+                        )
                     )
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(accentColor.copy(alpha = 0.2f), Color.Transparent),
-                        center = androidx.compose.ui.geometry.Offset(size.width * 0.9f, size.height * 0.1f),
-                        radius = size.width * 0.7f
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(displayAccent.copy(alpha = 0.2f), Color.Transparent),
+                            center = androidx.compose.ui.geometry.Offset(size.width * 0.9f, size.height * 0.1f),
+                            radius = size.width * 0.7f
+                        )
                     )
-                )
+                }
             }
 
-            MainContent(repository, player, pickedFolderUri, statusMessage, onPickFolder, accentColor)
+            MainContent(repository, player, pickedFolderUri, statusMessage, libraryPermissionGranted, onPickFolder, displayAccent,
+                onPickM3uImport, onExportM3uFile, importedM3u, onConsumeM3uImport)
         }
     }
 }
@@ -132,16 +162,27 @@ fun MainContent(
     player: AudioPlayer,
     pickedFolderUri: State<String?>,
     statusMessage: String,
+    libraryPermissionGranted: State<Boolean>,
     onPickFolder: () -> Unit,
-    accentColor: Color
+    accentColor: Color,
+    onPickM3uImport: () -> Unit,
+    onExportM3uFile: (String, String) -> Unit,
+    importedM3u: State<M3uImportData?>,
+    onConsumeM3uImport: () -> Unit
 ) {
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var playlists by remember { mutableStateOf(emptyList<Playlist>()) }
     var searchQuery by remember { mutableStateOf("") }
+    var debouncedSearchQuery by remember { mutableStateOf("") }
+    LaunchedEffect(searchQuery) {
+        delay(150)
+        debouncedSearchQuery = searchQuery
+    }
     val currentSong by player.currentSong.collectAsState()
     val error by player.error.collectAsState()
     var showSettings by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var playlistTransferMessage by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
 
@@ -191,23 +232,26 @@ fun MainContent(
         handleBack()
     }
 
-    // AI DJ Flow Toggle
-    var isAiDjFlowEnabled by remember { mutableStateOf(false) }
+    // AI DJ Flow Toggle (owned and persisted by the player, which acts on it)
+    val isAiDjFlowEnabled by player.isAiDjFlowEnabled.collectAsState()
 
     // Load songs & playlists whenever the picked folder changes
-    LaunchedEffect(pickedFolderUri.value) {
+    LaunchedEffect(pickedFolderUri.value, libraryPermissionGranted.value) {
         isLoading = true
         try {
             val loaded = if (pickedFolderUri.value != null) {
                 repository.loadFromFolder(pickedFolderUri.value!!)
-            } else {
+            } else if (libraryPermissionGranted.value) {
                 repository.getSongs()
+            } else {
+                emptyList()
             }
             songs = loaded
             playlists = repository.getPlaylists()
 
             if (player.currentSong.value == null && loaded.isNotEmpty()) {
-                player.setPlaylist(loaded)
+                player.restoreLastPlayback(loaded)
+                if (player.currentSong.value == null) player.setPlaylist(loaded)
             }
         } catch (e: Throwable) {
             // L-1 fix: surface load errors through the player error channel rather than swallowing silently.
@@ -215,6 +259,28 @@ fun MainContent(
         } finally {
             isLoading = false
         }
+    }
+
+    LaunchedEffect(importedM3u.value, songs, isLoading) {
+        val imported = importedM3u.value ?: return@LaunchedEffect
+        // Matching against a library that is still loading would report "no matches".
+        if (isLoading) return@LaunchedEffect
+        val entries = M3uPlaylistCodec.parse(imported.contents)
+        val matchedSongs = withContext(Dispatchers.Default) { M3uPlaylistCodec.resolve(entries, songs) }
+        if (matchedSongs.isNotEmpty()) {
+            val name = M3uPlaylistCodec.playlistNameFromFileName(imported.name).ifBlank { "Imported Playlist" }
+            val playlist = Playlist(
+                id = System.currentTimeMillis().toString(),
+                name = name,
+                songIds = matchedSongs.map { it.id }
+            )
+            playlists = playlists + playlist
+            repository.savePlaylist(playlist)
+            playlistTransferMessage = "Imported ${matchedSongs.size} tracks into $name."
+        } else {
+            playlistTransferMessage = "No tracks from that M3U file matched the current library."
+        }
+        onConsumeM3uImport()
     }
 
     // Persist favorite changes immediately
@@ -253,14 +319,15 @@ fun MainContent(
     var selectedTrackFilter by remember { mutableStateOf(0) } // 0 = All, 1 = Favorites
     var sortOrder by remember { mutableStateOf(SortOrder.TITLE) }
 
-    val filteredSongs by remember(songs, searchQuery, selectedTrackFilter, sortOrder) {
+    val filteredSongs by remember(songs, debouncedSearchQuery, selectedTrackFilter, sortOrder) {
         derivedStateOf {
             var list = if (selectedTrackFilter == 1) songs.filter { it.isFavorite } else songs
-            if (searchQuery.isNotBlank()) {
+            if (debouncedSearchQuery.isNotBlank()) {
+                val query = com.tushar.voidplayer.utils.SmlV2.foldForSearch(debouncedSearchQuery.trim())
                 list = list.filter {
-                    it.title.contains(searchQuery, ignoreCase = true) ||
-                    it.artist.contains(searchQuery, ignoreCase = true) ||
-                    it.album.contains(searchQuery, ignoreCase = true)
+                    com.tushar.voidplayer.utils.SmlV2.foldForSearch(it.title).contains(query) ||
+                    com.tushar.voidplayer.utils.SmlV2.foldForSearch(it.artist).contains(query) ||
+                    com.tushar.voidplayer.utils.SmlV2.foldForSearch(it.album).contains(query)
                 }
             }
             when (sortOrder) {
@@ -373,7 +440,7 @@ fun MainContent(
                             repository = repository,
                             accentColor = accentColor,
                             isAiDjFlowEnabled = isAiDjFlowEnabled,
-                            onToggleAiDjFlow = { isAiDjFlowEnabled = it },
+                            onToggleAiDjFlow = { player.setAiDjFlowEnabled(it) },
                             onToggleFavorite = ::onToggleFavorite
                         )
                     }
@@ -388,7 +455,15 @@ fun MainContent(
                             accentColor = accentColor,
                             onCreatePlaylist = ::onCreatePlaylist,
                             onDeletePlaylist = ::onDeletePlaylist,
-                            onToggleFavorite = ::onToggleFavorite
+                            onToggleFavorite = ::onToggleFavorite,
+                            onPickM3uImport = onPickM3uImport,
+                            onExportPlaylist = { playlist ->
+                                val playlistSongs = playlist.songIds.mapNotNull { id -> songs.find { it.id == id } }
+                                onExportM3uFile(
+                                    M3uPlaylistCodec.exportFileName(playlist.name),
+                                    M3uPlaylistCodec.encodeSongs(playlistSongs)
+                                )
+                            }
                         )
                     }
 
@@ -402,7 +477,10 @@ fun MainContent(
                                 accentColor = accentColor,
                                 onMinimize = { handleBack() },
                                 onOpenSettings = { showSettings = true },
-                                onToggleFavorite = ::onToggleFavorite
+                                onToggleFavorite = ::onToggleFavorite,
+                                onSongMetadataChanged = { updatedSong ->
+                                    songs = songs.map { if (it.id == updatedSong.id) updatedSong else it }
+                                }
                             )
                         } else {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -437,8 +515,9 @@ fun MainContent(
                                     accentColor = accentColor,
                                     onToggleFavorite = ::onToggleFavorite,
                                     onAddToPlaylist = { songToAddToPlaylist = it },
+                                    onAddToQueue = player::addToQueue,
                                     onPlayNext = { player.playNext(it) },
-                                    onClick = { player.play(song) }
+                                    onClick = { player.playFromList(filteredSongs, song) }
                                 )
                             }
                         }
@@ -519,5 +598,14 @@ fun MainContent(
                 containerColor = SurfaceElevated
             )
         }
+    }
+
+    playlistTransferMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { playlistTransferMessage = null },
+            title = { Text("M3U playlist", color = PrimaryText) },
+            text = { Text(message, color = SecondaryText) },
+            confirmButton = { TextButton(onClick = { playlistTransferMessage = null }) { Text("OK") } }
+        )
     }
 }

@@ -15,5 +15,10 @@ expect fun PlatformApp(
     player: AudioPlayer,
     pickedFolderUri: State<String?>,
     statusMessage: String,
-    onPickFolder: () -> Unit
+    libraryPermissionGranted: State<Boolean>,
+    onPickFolder: () -> Unit,
+    onPickM3uImport: () -> Unit,
+    onExportM3uFile: (String, String) -> Unit,
+    importedM3u: State<M3uImportData?>,
+    onConsumeM3uImport: () -> Unit
 )

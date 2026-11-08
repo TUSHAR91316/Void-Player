@@ -1,4 +1,4 @@
-﻿package com.tushar.voidplayer
+package com.tushar.voidplayer
 
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
@@ -19,15 +19,30 @@ actual fun getDominantColor(imageBytes: ByteArray): Color {
 
     LaunchedEffect(imageBytes) {
         dominantColor = withContext(Dispatchers.Default) {
+            var bitmap: android.graphics.Bitmap? = null
             try {
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                val palette = Palette.from(bitmap).generate()
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, bounds)
+                var sampleSize = 1
+                while (bounds.outWidth / sampleSize > 128 || bounds.outHeight / sampleSize > 128) {
+                    sampleSize *= 2
+                }
+                val decodedBitmap = BitmapFactory.decodeByteArray(
+                    imageBytes,
+                    0,
+                    imageBytes.size,
+                    BitmapFactory.Options().apply { inSampleSize = sampleSize }
+                ) ?: return@withContext Color.Cyan
+                bitmap = decodedBitmap
+                val palette = Palette.from(decodedBitmap).generate()
                 val argb = palette.getVibrantColor(
                     palette.getDominantColor(Color.Cyan.toArgb())
                 )
                 Color(argb)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Color.Cyan
+            } finally {
+                bitmap?.recycle()
             }
         }
     }

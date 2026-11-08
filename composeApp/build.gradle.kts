@@ -25,10 +25,6 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
                 
-                implementation(libs.voyager.navigator)
-                implementation(libs.voyager.transitions)
-                implementation(libs.koin.core)
-                implementation(libs.koin.compose)
             }
         }
         val commonTest by getting {
@@ -44,6 +40,7 @@ kotlin {
                 implementation(libs.media3.session)
                 implementation(libs.media3.ui)
                 implementation(libs.androidx.palette)
+                implementation(libs.jaudiotagger)
             }
         }
 
@@ -54,12 +51,35 @@ android {
     namespace = "com.tushar.voidplayer"
     compileSdk = 36 // Android 16 (Baklava)
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
+        // Published package on F-Droid and GitHub Releases. Changing it breaks updates for
+        // every installed user: F-Droid rejects a build whose package differs from its app ID.
         applicationId = "com.tushar.voidplayer"
         minSdk = 26
         targetSdk = 36 // Android 16
-        versionCode = 6
-        versionName = "2.3"
+        versionCode = 7
+        versionName = "2.4.0"
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        // F-Droid builds this flavor (`gradle: [fdroid]` in fdroiddata). Its signed release
+        // APK is also the GitHub Releases asset that F-Droid compares for reproducibility.
+        create("fdroid") {
+            dimension = "distribution"
+            applicationId = "com.tushar.voidplayer"
+            buildConfigField("String", "DISTRIBUTION", "\"fdroid\"")
+        }
+        // Google Play build, published under the Play package name.
+        create("full") {
+            dimension = "distribution"
+            applicationId = "com.orbitwork.VoidPlayer"
+            buildConfigField("String", "DISTRIBUTION", "\"full\"")
+        }
     }
 
     dependenciesInfo {
@@ -108,6 +128,12 @@ android {
     buildTypes {
         getByName("release") {
             vcsInfo.include = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             val releaseSigning = signingConfigs.findByName("release")
             if (releaseSigning?.storeFile != null && releaseSigning.storeFile!!.exists()) {
                 signingConfig = releaseSigning
@@ -122,19 +148,25 @@ android {
     }
 
     applicationVariants.all {
+        val variant = this
         outputs.all {
             val outputImpl = this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl
             if (outputImpl != null) {
                 val versionName = defaultConfig.versionName
-                val variantName = name
-                outputImpl.outputFileName = "VoidPlayer-${versionName}-${variantName}.apk"
+                // fdroidRelease is named exactly like the asset fdroiddata's `Binaries:` URL
+                // expects (V%v/VoidPlayer-%v-release.apk), so it can be uploaded as is.
+                outputImpl.outputFileName = if (variant.flavorName == "fdroid") {
+                    "VoidPlayer-${versionName}-${variant.buildType.name}.apk"
+                } else {
+                    "VoidPlayer-${versionName}-${variant.flavorName}-${variant.buildType.name}.apk"
+                }
             }
         }
     }
 
     lint {
-        abortOnError = false
-        checkReleaseBuilds = false
+        abortOnError = true
+        checkReleaseBuilds = true
     }
 
     compileOptions {

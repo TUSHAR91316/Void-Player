@@ -27,9 +27,9 @@
                 <TextBlock Text="Albums"
                            FontSize="28"
                            FontWeight="Bold"
-                           Foreground="#FFFFFF"/>
+                           Foreground="#EDEEF0"/>
                 <TextBlock Text="{x:Bind HeaderStatsText, Mode=OneWay}"
-                           Foreground="#8B9E94"
+                           Foreground="#A9AEB5"
                            FontSize="13"/>
             </StackPanel>
 
@@ -52,8 +52,8 @@
         <!-- EMPTY STATE (Shown when 0 albums) -->
         <Border Grid.Row="1"
                 Visibility="{x:Bind EmptyStateVisibility, Mode=OneWay}"
-                Background="#0B130F"
-                BorderBrush="#1A2D22"
+                Background="#131417"
+                BorderBrush="#2A2D32"
                 BorderThickness="1"
                 CornerRadius="16"
                 HorizontalAlignment="Center"
@@ -81,10 +81,10 @@
                                FontSize="20"
                                FontWeight="Bold"
                                TextAlignment="Center"
-                               Foreground="#FFFFFF"/>
+                               Foreground="#EDEEF0"/>
                     <TextBlock Text="Add your music folders to explore albums with high-resolution artwork."
                                FontSize="13"
-                               Foreground="#8B9E94"
+                               Foreground="#A9AEB5"
                                TextAlignment="Center"
                                TextWrapping="Wrap"/>
                 </StackPanel>
@@ -120,8 +120,8 @@
 
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="models:AlbumItem">
-                    <Border Background="#0D1612"
-                            BorderBrush="#1E3327"
+                    <Border Background="#17191C"
+                            BorderBrush="#2A2D32"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="12"
@@ -132,7 +132,7 @@
                             <Grid Width="151"
                                   Height="151"
                                   CornerRadius="8">
-                                <Border Background="#122019"
+                                <Border Background="#1A1C20"
                                         CornerRadius="8">
                                     <FontIcon Glyph="&#xE93C;"
                                               FontSize="36"
@@ -150,7 +150,7 @@
                                 <TextBlock Text="{x:Bind Name}"
                                            FontWeight="SemiBold"
                                            FontSize="13"
-                                           Foreground="#FFFFFF"
+                                           Foreground="#EDEEF0"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{x:Bind Artist}"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"

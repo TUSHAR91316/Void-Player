@@ -10,7 +10,7 @@
   <Identity
     Name="Byte-Labs.VoidPlayer"
     Publisher="CN=6CDD7E10-2EAB-4D1D-B6CA-5D8F278050DF"
-    Version="2.3.0.0" />
+    Version="2.4.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="2F98DBEA-7806-4B1E-B3CB-5D76EADE047C" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

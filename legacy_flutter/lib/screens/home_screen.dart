@@ -61,7 +61,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 // Windows Title Bar Drag Area
                 if (Platform.isWindows)
                   GestureDetector(
-                    onPanStart: (details) => windowManager.startDragging(),
+                    onPanStart: (details) =>
+                        WindowManager.instance.getCurrent()?.startDragging(),
                     child: Container(
                       height: 40,
                       color: Colors.black.withValues(alpha: 0.5),
@@ -69,7 +70,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: IconButton(
                         icon: const Icon(Icons.close, size: 20),
-                        onPressed: () => windowManager.close(),
+                        onPressed: () =>
+                            WindowManager.instance.getCurrent()?.close(),
                       ),
                     ),
                   ),
