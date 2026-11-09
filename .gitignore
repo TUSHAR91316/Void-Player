@@ -93,6 +93,8 @@ imaged/
 # Binaries & Installers
 *.msi
 *.exe
+*.wxs
+*.wixpdb
 
 # Google Play Store assets & submissions (CRITICAL: Never commit to Git)
 /[Pp]lay [Ss]tore/
